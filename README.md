@@ -19,6 +19,17 @@ from the page but keeps the comment in the inbox. Pins use each reviewer's first
 GitHub hosts the source, contribution workflow, and installable package. Netlify hosts the demo/widget and receives
 shared comments. Each installer deploys a separate Netlify site and owns their data.
 
+## Install it for your own prototypes
+
+Give [`INSTALL_WITH_AI.md`](INSTALL_WITH_AI.md) to your coding agent. It contains the complete fork, Netlify storage,
+website integration, Codex skill, review-link generation, safety, and verification workflow. The intended instruction
+is simply:
+
+> Install Review Prototype in this website and make the prototype reviewable.
+
+The prototype owner needs GitHub, Netlify, and permission to edit the website. Reviewers need only the generated link
+and their name.
+
 ## Try it locally
 
 ```bash
