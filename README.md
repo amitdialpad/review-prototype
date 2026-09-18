@@ -96,8 +96,9 @@ author display name, comment text, normalized position, optional selection recta
 2. In Netlify, choose **Add new project → Import an existing project** and select the fork.
 3. Netlify reads `netlify.toml`, builds `dist`, deploys the Functions, and provisions the site-wide Blobs store on first
    use—there is no database migration.
-4. Set `ALLOWED_ORIGINS` to the exact comma-separated prototype origins allowed to use the service. The deployed
-   Netlify site's own origin is automatically allowed.
+4. In **Project configuration → Environment variables**, set `ALLOWED_ORIGINS` (all scopes) to the exact
+   comma-separated prototype origins allowed to use the service, then redeploy. The deployed Netlify site's own origin
+   is automatically allowed. `RETENTION_DAYS` is optional and defaults to `90`.
 5. Put the resulting `https://YOUR-SITE.netlify.app` origin in `ReviewPrototype.init({ apiUrl })`.
 
 Do not use `*` for `ALLOWED_ORIGINS`. A review link is a capability: anyone holding it can read and add feedback to
