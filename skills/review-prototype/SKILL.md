@@ -22,7 +22,7 @@ all feedback appears in one inbox.
    `npm install --save-dev github:amitdialpad/review-prototype` then
    `npx review-prototype init --public-dir <app-public-directory>/review-prototype`.
 4. Load the CSS and initialize `ReviewPrototype` once in the application shell. Set a stable, non-secret `projectId`,
-   the actual hosted Worker origin, and the app's `history` or `hash` router style.
+   the actual hosted Netlify site origin, and the app's `history` or `hash` router style.
 5. Preserve `review` through internal navigation. The widget handles ordinary links and History API calls; use its
    `navigate`, `getScope`, or `getContext` hooks when the app has custom routing or modal state.
 6. Create or maintain `review-prototype.json` with the main review sections, not every scenario. Never put a token,
@@ -35,10 +35,10 @@ all feedback appears in one inbox.
 
 ## Hosted storage
 
-GitHub Pages can host the widget but cannot receive comments. Shared review requires the included Worker + D1 service
-or a compatible HTTPS API. Before returning customer-ready links, verify exact-origin CORS, bounded requests, write
-rate limiting, the 1,000-active-comment session cap, 90-day expiry, and daily deletion. Never silently substitute
-browser-local storage for a shared link.
+GitHub hosts the source, but shared review requires the included Netlify Functions + Blobs service or a compatible HTTPS
+API. Before returning customer-ready links, verify exact-origin CORS, bounded requests, write rate limiting, the
+1,000-active-comment session cap, 90-day expiry, and daily deletion. Never silently substitute browser-local storage
+for a shared link.
 
 If the deployment needs a new account, login, secret, paid service, or public release authorization, complete safe local
 work and stop at that external boundary.

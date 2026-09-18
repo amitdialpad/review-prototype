@@ -47,7 +47,7 @@
       document.querySelector('#open-dialog').addEventListener('click', () => document.querySelector('dialog').showModal());
       ReviewPrototype.init({
         projectId: 'review-prototype-demo',
-        apiUrl: '__REVIEW_API_URL__',
+        apiUrl: '__REVIEW_API_URL__' || window.location.origin,
         router: 'history',
       });
     </script>

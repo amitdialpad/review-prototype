@@ -7,7 +7,7 @@ Deployment owners should:
 
 - allow only exact trusted website origins;
 - keep the default bounded request sizes, rate limits, session cap, and 90-day expiry;
-- never put Cloudflare or GitHub secrets in browser configuration;
+- never put Netlify or GitHub secrets in browser configuration;
 - treat review URLs as bearer capabilities and rotate to a new session if a link is exposed;
 - use review mode only with prototype or synthetic data.
 

@@ -9,12 +9,12 @@ from the page but keeps the comment in the inbox. Pins use each reviewer's first
 ## What it is
 
 - A framework-neutral browser widget: plain JavaScript and CSS.
-- A small Cloudflare Worker + D1 service for shared comments.
+- Netlify Functions + Blobs for shared comments.
 - A manifest and CLI that generate one review session with a link for each important screen.
 - An optional Codex skill that handles integration and link generation for the prototype owner.
 
-GitHub hosts the source and static widget. GitHub Pages alone cannot receive comments, so shared reviews use the
-included Worker. Each installer deploys the Worker to their own Cloudflare account and owns their data.
+GitHub hosts the source, contribution workflow, and installable package. Netlify hosts the demo/widget and receives
+shared comments. Each installer deploys a separate Netlify site and owns their data.
 
 ## Try it locally
 
@@ -26,7 +26,7 @@ python3 -m http.server 4173 --directory dist
 ```
 
 Open `http://127.0.0.1:4173/?review=local`. Local comments stay in that browser. Click the link icon to create a
-shared-session URL; shared comments require the Worker configuration below.
+shared-session URL; shared comments require the Netlify deployment below.
 
 ## Add it to a website
 
@@ -46,7 +46,7 @@ Include the copied assets in the website shell:
 
   ReviewPrototype.init({
     projectId: 'my-prototype',
-    apiUrl: 'https://YOUR-WORKER.workers.dev',
+    apiUrl: 'https://YOUR-SITE.netlify.app',
     router: 'history',
   });
 </script>
@@ -86,22 +86,22 @@ npx review-prototype links \
 
 Every generated link carries the same unguessable session token, so all comments appear in one inbox.
 
-## Deploy shared comment storage
+## Deploy on Netlify
 
-The default retention is **90 days**. Expired comments stop appearing immediately and a daily scheduled job permanently
-deletes them. The service stores only the project/session identifiers, route scope, author display name, comment text,
-normalized position, optional selection rectangle, element label, and timestamps.
+The default retention is **90 days**. Expired comments stop appearing immediately and a daily Scheduled Function
+permanently deletes them from Netlify Blobs. The service stores only the project/session identifiers, route scope,
+author display name, comment text, normalized position, optional selection rectangle, element label, and timestamps.
 
-1. Authenticate Wrangler: `npx wrangler login`.
-2. Create D1: `npm run db:create`.
-3. Put the returned database ID in `worker/wrangler.jsonc`.
-4. Replace `ALLOWED_ORIGINS` with the exact comma-separated website origins allowed to use the service.
-5. Apply the schema: `npm run db:migrate`.
-6. Deploy: `npm run deploy:worker`.
-7. Put the resulting HTTPS Worker origin in `ReviewPrototype.init({ apiUrl })`.
+1. Fork this repository or use it as a template.
+2. In Netlify, choose **Add new project → Import an existing project** and select the fork.
+3. Netlify reads `netlify.toml`, builds `dist`, deploys the Functions, and provisions the site-wide Blobs store on first
+   use—there is no database migration.
+4. Set `ALLOWED_ORIGINS` to the exact comma-separated prototype origins allowed to use the service. The deployed
+   Netlify site's own origin is automatically allowed.
+5. Put the resulting `https://YOUR-SITE.netlify.app` origin in `ReviewPrototype.init({ apiUrl })`.
 
-Do not set `ALLOWED_ORIGINS` to `*` for a public deployment. A review link is a capability: anyone holding it can read
-and add feedback to that session. Do not use review sessions for secrets or confidential production data.
+Do not use `*` for `ALLOWED_ORIGINS`. A review link is a capability: anyone holding it can read and add feedback to
+that session. Do not use review sessions for secrets or confidential production data.
 
 ## Optional Codex skill
 

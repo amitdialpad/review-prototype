@@ -17,7 +17,7 @@ async function init() {
   await mkdir(publicDirectory, { recursive: true });
   await cp(resolve(root, 'dist/review-prototype.js'), resolve(publicDirectory, 'review-prototype.js'));
   await cp(resolve(root, 'dist/review-prototype.css'), resolve(publicDirectory, 'review-prototype.css'));
-  const apiUrl = option('--api-url', 'https://YOUR-WORKER.workers.dev');
+  const apiUrl = option('--api-url', 'https://YOUR-SITE.netlify.app');
   console.log(`Copied Review Prototype to ${publicDirectory}\n`);
   console.log(`<link rel="stylesheet" href="/review-prototype/review-prototype.css" />
 <script type="module">

@@ -1,6 +1,4 @@
 node_modules/
 dist/
-.wrangler/
+.netlify/
 .DS_Store
-worker/.dev.vars
-worker/wrangler.local.jsonc

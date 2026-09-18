@@ -8,9 +8,10 @@
   "files": [
     "bin",
     "dist",
+    "netlify",
+    "netlify.toml",
     "scripts",
-    "skills",
-    "worker"
+    "skills"
   ],
   "bin": {
     "review-prototype": "bin/review-prototype.mjs"
@@ -19,16 +20,12 @@
     "build": "node scripts/build.mjs",
     "prepare": "npm run build",
     "test": "node --test",
-    "check": "npm test && npm run build",
-    "dev:worker": "wrangler dev --config worker/wrangler.jsonc",
-    "deploy:worker": "wrangler deploy --config worker/wrangler.jsonc",
-    "db:create": "wrangler d1 create review-prototype",
-    "db:migrate": "wrangler d1 migrations apply review-prototype --remote --config worker/wrangler.jsonc"
-  },
-  "devDependencies": {
-    "wrangler": "^4.0.0"
+    "check": "npm test && npm run build"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.0"
   }
 }

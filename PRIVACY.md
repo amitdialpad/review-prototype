@@ -14,7 +14,7 @@ It does not collect screenshots, page HTML, form contents, credentials, cookies,
 traffic. The included deployment retains comments for 90 days, excludes expired records from reads, and permanently
 deletes expired records daily.
 
-The person deploying the Worker controls the database and allowed website origins. The session URL is a capability:
+The person deploying the Netlify site controls the Blobs store and allowed website origins. The session URL is a capability:
 anyone with that URL can read and add comments. Do not place confidential information in a review.
 
 Done state and the remembered reviewer name stay in the current browser's local storage. They are not written to the

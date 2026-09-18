@@ -1,0 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  ALLOWED_ORIGINS = "https://beacon-test.dialpad.design"
+  RETENTION_DAYS = "90"
+
+[functions]
+  node_bundler = "esbuild"
+
+[functions."review-cleanup"]
+  schedule = "@daily"
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/review-comments?health=1"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v1/projects/:projectId/sessions/:sessionId/comments"
+  to = "/.netlify/functions/review-comments?projectId=:projectId&sessionId=:sessionId"
+  status = 200
+  force = true
