@@ -118,6 +118,16 @@ async function useWriteSlot(store, projectId, sessionId, now = Date.now()) {
 
 function readRoute(request) {
   const url = new URL(request.url);
+  if (url.pathname === '/health') return { health: true };
+  const pathMatch = url.pathname.match(
+    /^\/v1\/projects\/([^/]+)\/sessions\/([^/]+)\/comments\/?$/
+  );
+  if (pathMatch) {
+    const projectId = decodeURIComponent(pathMatch[1]);
+    const sessionId = decodeURIComponent(pathMatch[2]);
+    if (!PROJECT_PATTERN.test(projectId) || !SESSION_PATTERN.test(sessionId)) return null;
+    return { projectId, sessionId };
+  }
   const projectId = url.searchParams.get('projectId') || '';
   const sessionId = url.searchParams.get('sessionId') || '';
   if (!projectId && !sessionId && url.searchParams.get('health') === '1') return { health: true };

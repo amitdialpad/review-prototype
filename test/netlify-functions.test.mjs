@@ -54,7 +54,7 @@ const env = {
   URL: 'https://review-prototype.netlify.app',
 };
 const session = '550e8400-e29b-41d4-a716-446655440000';
-const endpoint = `https://review-prototype.netlify.app/.netlify/functions/review-comments?projectId=demo&sessionId=${session}`;
+const endpoint = `https://review-prototype.netlify.app/v1/projects/demo/sessions/${session}/comments`;
 
 test('normalizes bounded comment data and ignores page contents', () => {
   assert.deepEqual(
@@ -123,7 +123,7 @@ test('rejects an unapproved website origin', async () => {
 
 test('health endpoint reports Netlify storage and retention', async () => {
   const response = await handleReviewRequest(
-    new Request('https://review-prototype.netlify.app/.netlify/functions/review-comments?health=1'),
+    new Request('https://review-prototype.netlify.app/health'),
     env,
     new MemoryStore()
   );
