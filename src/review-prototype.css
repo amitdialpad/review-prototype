@@ -1,0 +1,383 @@
+:root {
+  --rp-accent: #7c5ce7;
+  --rp-accent-strong: #6842dc;
+  --rp-text: #202124;
+  --rp-muted: #667085;
+  --rp-surface: #ffffff;
+  --rp-border: #d8dee8;
+  --rp-soft: #f5f6f8;
+  --rp-done: #237a4b;
+  --rp-shadow: 0 16px 42px rgb(20 24 33 / 18%);
+}
+
+.rp-root,
+.rp-root * {
+  box-sizing: border-box;
+}
+
+.rp-root {
+  position: fixed;
+  z-index: 2147483000;
+  color: var(--rp-text);
+  font: 14px/1.4 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  pointer-events: none;
+}
+
+.rp-root button,
+.rp-root input,
+.rp-root textarea {
+  font: inherit;
+}
+
+.rp-capture,
+.rp-annotations {
+  position: absolute;
+  inset: 0;
+}
+
+.rp-capture {
+  z-index: 1;
+  cursor: crosshair;
+  pointer-events: none;
+}
+
+.rp-capture-active {
+  pointer-events: auto;
+}
+
+.rp-annotations {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.rp-hover,
+.rp-selection {
+  position: absolute;
+  border: 2px solid var(--rp-accent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--rp-accent) 9%, transparent);
+  pointer-events: none;
+}
+
+.rp-selection-draft {
+  background: color-mix(in srgb, var(--rp-accent) 14%, transparent);
+}
+
+.rp-marker {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid white;
+  border-radius: 7px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 24px;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.rp-toolbar {
+  position: absolute;
+  z-index: 5;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--rp-border);
+  border-radius: 12px;
+  background: var(--rp-surface);
+  box-shadow: var(--rp-shadow);
+  pointer-events: auto;
+}
+
+.rp-icon-button,
+.rp-plain-icon {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--rp-muted);
+  cursor: pointer;
+}
+
+.rp-icon-button {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+.rp-icon-button:hover,
+.rp-icon-button.rp-active {
+  background: var(--rp-soft);
+  color: var(--rp-accent-strong);
+}
+
+.rp-icon-button.rp-copied {
+  color: var(--rp-done);
+}
+
+.rp-icon-button svg,
+.rp-plain-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.rp-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 2px solid var(--rp-surface);
+  border-radius: 9px;
+  background: var(--rp-accent-strong);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.rp-panel,
+.rp-composer,
+.rp-card {
+  border: 1px solid var(--rp-border);
+  background: var(--rp-surface);
+  box-shadow: var(--rp-shadow);
+  color: var(--rp-text);
+  pointer-events: auto;
+}
+
+.rp-panel {
+  position: absolute;
+  z-index: 6;
+  top: 16px;
+  right: 16px;
+  width: min(380px, calc(100% - 32px));
+  max-height: calc(100% - 86px);
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.rp-panel[hidden] {
+  display: none;
+}
+
+.rp-panel > header,
+.rp-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rp-panel > header {
+  padding: 14px 14px 10px 16px;
+}
+
+.rp-plain-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+.rp-plain-icon:hover {
+  background: var(--rp-soft);
+  color: var(--rp-text);
+}
+
+.rp-done-control {
+  color: var(--rp-done);
+}
+
+.rp-comment-list {
+  max-height: calc(100vh - 150px);
+  overflow: auto;
+  padding: 4px 8px 8px;
+}
+
+.rp-comment-row {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--rp-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.rp-comment-row:hover {
+  background: var(--rp-soft);
+}
+
+.rp-comment-row-done {
+  background: color-mix(in srgb, var(--rp-done) 8%, var(--rp-surface));
+}
+
+.rp-avatar {
+  display: grid;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rp-comment-content {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.rp-comment-meta {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.rp-comment-meta > span {
+  overflow: hidden;
+  color: var(--rp-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-comment-meta .rp-done-label {
+  color: var(--rp-done);
+  font-weight: 650;
+}
+
+.rp-comment-message {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.rp-empty,
+.rp-error {
+  margin: 0;
+  padding: 14px 16px 18px;
+  color: var(--rp-muted);
+}
+
+.rp-error {
+  color: #b42318;
+}
+
+.rp-composer,
+.rp-card {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.rp-composer input,
+.rp-composer textarea {
+  width: 100%;
+  border: 1px solid var(--rp-border);
+  border-radius: 9px;
+  background: var(--rp-surface);
+  color: var(--rp-text);
+  outline: none;
+}
+
+.rp-composer input {
+  padding: 9px 10px;
+}
+
+.rp-composer textarea {
+  min-height: 82px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.rp-composer input:focus,
+.rp-composer textarea:focus {
+  border-color: var(--rp-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rp-accent) 18%, transparent);
+}
+
+.rp-context-label {
+  overflow: hidden;
+  color: var(--rp-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.rp-primary,
+.rp-secondary {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.rp-primary {
+  border: 1px solid var(--rp-accent-strong);
+  background: var(--rp-accent-strong);
+  color: white;
+}
+
+.rp-secondary {
+  border: 1px solid var(--rp-border);
+  background: var(--rp-surface);
+  color: var(--rp-text);
+}
+
+.rp-card-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.rp-card p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rp-panel,
+  .rp-composer,
+  .rp-card {
+    animation: rp-enter 120ms ease-out;
+  }
+}
+
+@keyframes rp-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}

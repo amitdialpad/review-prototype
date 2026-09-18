@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Review Prototype demo</title>
+    <link rel="stylesheet" href="./review-prototype.css" />
+    <style>
+      :root { color: #202124; background: #f6f3ee; font-family: Inter, system-ui, sans-serif; }
+      body { margin: 0; }
+      main { width: min(920px, calc(100% - 40px)); margin: 64px auto; }
+      h1 { max-width: 680px; font-size: clamp(40px, 7vw, 76px); line-height: .98; letter-spacing: -.05em; }
+      p { max-width: 620px; color: #5d5d66; font-size: 18px; line-height: 1.6; }
+      .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+      .card { min-height: 180px; padding: 24px; border: 1px solid #d9d4cc; border-radius: 18px; background: white; }
+      .card strong { font-size: 20px; }
+      dialog { width: min(460px, calc(100% - 40px)); border: 0; border-radius: 20px; padding: 28px; }
+      dialog::backdrop { background: rgb(0 0 0 / 36%); }
+      button { padding: 10px 16px; border: 1px solid #cbc5bb; border-radius: 10px; background: white; cursor: pointer; }
+      @media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span>Browser-native feedback</span>
+      <h1>Review the real prototype, not a screenshot of it.</h1>
+      <p>
+        Add <code>?review=local</code> to this URL. Use the comment button, then click an element or drag across an
+        area. The ordinary page stays untouched when review mode is absent.
+      </p>
+      <button id="open-dialog">Open a modal</button>
+      <section class="cards">
+        <article class="card"><strong>One link</strong><p>Reviewers only need the URL and their name.</p></article>
+        <article class="card"><strong>Every screen</strong><p>One inbox gathers feedback across the prototype.</p></article>
+        <article class="card"><strong>Done, not deleted</strong><p>Resolved feedback stays visible as history.</p></article>
+      </section>
+    </main>
+
+    <dialog aria-label="Example modal" data-review-context="example-modal">
+      <h2>Comments belong to this modal</h2>
+      <p>The review surface follows the active dialog instead of sitting behind it.</p>
+      <form method="dialog"><button>Close</button></form>
+    </dialog>
+
+    <script type="module">
+      import { ReviewPrototype } from './review-prototype.js';
+      document.querySelector('#open-dialog').addEventListener('click', () => document.querySelector('dialog').showModal());
+      ReviewPrototype.init({
+        projectId: 'review-prototype-demo',
+        apiUrl: '__REVIEW_API_URL__',
+        router: 'history',
+      });
+    </script>
+  </body>
+</html>

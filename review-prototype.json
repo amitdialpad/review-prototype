@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "Review Prototype demo",
+  "projectId": "review-prototype-demo",
+  "router": "history",
+  "reviewParam": "review",
+  "routes": [
+    {
+      "label": "Demo",
+      "path": "/"
+    }
+  ]
+}
