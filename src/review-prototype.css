@@ -1,13 +1,13 @@
 :root {
-  --rp-accent: #7c5ce7;
-  --rp-accent-strong: #6842dc;
-  --rp-text: #202124;
-  --rp-muted: #667085;
+  --rp-accent: #3f3f46;
+  --rp-accent-strong: #18181b;
+  --rp-text: #18181b;
+  --rp-muted: #71717a;
   --rp-surface: #ffffff;
-  --rp-border: #d8dee8;
-  --rp-soft: #f5f6f8;
-  --rp-done: #237a4b;
-  --rp-shadow: 0 16px 42px rgb(20 24 33 / 18%);
+  --rp-border: #dedee3;
+  --rp-soft: #f4f4f5;
+  --rp-done: #52525b;
+  --rp-shadow: 0 18px 50px rgb(0 0 0 / 16%);
 }
 
 .rp-root,
@@ -137,16 +137,23 @@
   position: absolute;
   top: -4px;
   right: -4px;
+  display: grid;
+  width: 18px;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  place-items: center;
+  padding: 0;
   border: 2px solid var(--rp-surface);
-  border-radius: 9px;
+  border-radius: 50%;
   background: var(--rp-accent-strong);
   color: white;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 14px;
+  line-height: 1;
+}
+
+.rp-count[hidden] {
+  display: none;
 }
 
 .rp-panel,
