@@ -5,6 +5,10 @@ drag anywhere, and leave feedback. They do not need GitHub accounts.
 
 The person who owns the prototype sees every screen's feedback in one inbox. Marking a comment Done removes its pin
 from the page but keeps the comment in the inbox. Pins use each reviewer's first-name initial and a stable color.
+
+In Google Chrome, reviewers can talk instead of typing. Review Prototype inserts Chrome's speech transcript as an
+editable draft and never submits it automatically. Safari, Edge, and unsupported browsers automatically show the
+ordinary typing experience using the same review link.
 <img width="503" height="397" alt="Screenshot 2026-09-18 at 06 32 26" src="https://github.com/user-attachments/assets/b26d28b8-569e-4890-bea7-f81cb30efe8d" />
 <img width="518" height="288" alt="Screenshot 2026-09-18 at 06 32 37" src="https://github.com/user-attachments/assets/2a9ae99d-733b-4def-b4a9-6b2a82fb7ede" />
 <img width="519" height="327" alt="Screenshot 2026-09-18 at 06 33 28" src="https://github.com/user-attachments/assets/4d07ca05-cd4c-4b55-baab-4b6ff0e583bb" />
@@ -62,6 +66,8 @@ Include the copied assets in the website shell:
     projectId: 'my-prototype',
     apiUrl: 'https://YOUR-SITE.netlify.app',
     router: 'history',
+    voiceInput: 'chrome',
+    voicePhrases: ['Your product name', 'Your feature name'],
   });
 </script>
 ```
@@ -117,6 +123,10 @@ author display name, comment text, normalized position, optional selection recta
 
 Do not use `*` for `ALLOWED_ORIGINS`. A review link is a capability: anyone holding it can read and add feedback to
 that session. Do not use review sessions for secrets or confidential production data.
+
+Voice input uses the browser's speech-recognition service. Review Prototype does not receive or store microphone
+audio; it only handles the editable transcript Chrome returns. Browser or platform providers may process speech under
+their own terms and privacy policies.
 
 ## Optional Codex skill
 

@@ -211,6 +211,9 @@ permission, or release-authorization boundaries that require the owner.
 - A generated review URL is a bearer capability: anyone holding it can read and add feedback to that session.
 - Use prototype or synthetic data. Do not use review sessions for secrets or confidential production information.
 - Reviewer names are self-asserted; there is intentionally no reviewer authentication.
+- Chrome voice input is optional and browser-provided. Review Prototype does not receive or store microphone audio;
+  it handles only the editable transcript returned by Chrome. Unsupported browsers automatically use typing with the
+  same review URL.
 - Use exact allowed origins and never `ALLOWED_ORIGINS=*`.
 - The included service limits request sizes and comments per session. Do not remove those protections.
 - Shared comments expire after the configured retention period; the default is 90 days.
