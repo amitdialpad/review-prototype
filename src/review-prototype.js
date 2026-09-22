@@ -128,7 +128,7 @@ function elementLabel(element) {
     .find(value => value?.trim())
     ?.trim();
   if (explicit) return explicit.slice(0, 120);
-  const text = element.textContent?.replace(/\s+/g, ' ').trim();
+  const text = (element.innerText || element.textContent)?.replace(/\s+/g, ' ').trim();
   return text && text.length <= 120 ? text : element.tagName.toLocaleLowerCase();
 }
 
@@ -547,6 +547,7 @@ class ReviewPrototypeWidget {
     if (!session) return;
     this.dictation = null;
     session.cancelled = true;
+    if (session.restartTimer) window.clearTimeout(session.restartTimer);
     try {
       session.recognition.abort();
     } catch {
@@ -564,8 +565,8 @@ class ReviewPrototypeWidget {
     if (!Recognition || this.dictation) return;
     const recognition = new Recognition();
     const originalValue = textarea.value;
-    const selectionStart = textarea.selectionStart ?? originalValue.length;
-    const selectionEnd = textarea.selectionEnd ?? selectionStart;
+    const selectionStart = originalValue.length;
+    const selectionEnd = originalValue.length;
     const session = {
       recognition,
       textarea,
@@ -573,6 +574,9 @@ class ReviewPrototypeWidget {
       selectionStart,
       selectionEnd,
       cancelled: false,
+      manualStop: false,
+      restartTimer: null,
+      committedTranscript: '',
       transcript: '',
       error: '',
       finish: () => {},
@@ -617,7 +621,8 @@ class ReviewPrototypeWidget {
         const text = event.results[index]?.[0]?.transcript?.trim();
         if (text) segments.push(text);
       }
-      session.transcript = segments.join(' ').replace(/\s+/g, ' ').trim();
+      const cycleTranscript = segments.join(' ').replace(/\s+/g, ' ').trim();
+      session.transcript = [session.committedTranscript, cycleTranscript].filter(Boolean).join(' ');
       textarea.value = mergeDictationTranscript(
         originalValue,
         session.transcript,
@@ -636,25 +641,44 @@ class ReviewPrototypeWidget {
     };
     recognition.onerror = event => {
       if (this.dictation !== session || session.cancelled || event.error === 'aborted') return;
+      if (event.error === 'no-speech') return;
       session.error =
         event.error === 'not-allowed' || event.error === 'service-not-allowed'
           ? 'Microphone access was blocked. You can keep typing.'
           : event.error === 'audio-capture'
             ? 'Chrome could not find a microphone. You can keep typing.'
-            : event.error === 'no-speech'
-              ? 'No speech was detected. Try again or keep typing.'
-              : 'Voice input stopped. You can keep typing.';
+            : 'Voice input stopped. You can keep typing.';
       setState('error', session.error);
     };
     recognition.onend = () => {
       if (this.dictation !== session) return;
+      if (!session.manualStop && !session.error) {
+        session.committedTranscript = session.transcript;
+        setState('requesting', 'Listening…');
+        session.restartTimer = window.setTimeout(() => {
+          session.restartTimer = null;
+          if (this.dictation !== session || session.cancelled || session.manualStop) return;
+          try {
+            recognition.start();
+          } catch {
+            this.dictation = null;
+            session.error = 'Voice input stopped. You can keep typing.';
+            session.finish();
+          }
+        }, 150);
+        return;
+      }
       this.dictation = null;
-      if (!session.error && !session.transcript) session.error = 'No speech was detected. Try again or keep typing.';
       session.finish();
     };
     cancel.onclick = () => this.cancelDictation();
     stop.onclick = () => {
       if (this.dictation !== session) return;
+      session.manualStop = true;
+      if (session.restartTimer) {
+        window.clearTimeout(session.restartTimer);
+        session.restartTimer = null;
+      }
       setState('stopping', 'Finishing your voice comment…');
       try {
         recognition.stop();
@@ -960,7 +984,7 @@ class ReviewPrototypeWidget {
     textarea.maxLength = 4000;
     textarea.rows = 3;
     const VoiceRecognition = this.voiceRecognitionConstructor();
-    textarea.placeholder = VoiceRecognition ? '' : 'Leave a comment';
+    textarea.placeholder = VoiceRecognition ? 'Type your feedback' : 'Leave a comment';
     textarea.setAttribute('aria-label', 'Comment');
     const actions = document.createElement('div');
     actions.className = 'rp-actions';
@@ -976,11 +1000,11 @@ class ReviewPrototypeWidget {
     voiceControls.className = 'rp-voice-controls';
     const mic = button('rp-voice-button rp-voice-start', 'Talk to leave feedback (Chrome)', ICONS.mic);
     const micLabel = document.createElement('span');
-    micLabel.textContent = 'Talk to leave feedback';
+    micLabel.textContent = 'Start talking';
     const micHint = document.createElement('span');
     micHint.className = 'rp-voice-hint';
-    micHint.textContent = 'or start typing';
-    mic.append(micLabel, micHint);
+    micHint.textContent = 'or type below';
+    mic.append(micLabel);
     const wave = document.createElement('span');
     wave.className = 'rp-voice-wave';
     wave.hidden = true;
@@ -999,9 +1023,12 @@ class ReviewPrototypeWidget {
       const listening = commentField.classList.contains('rp-listening');
       commentField.classList.toggle('rp-has-comment', hasText);
       actions.hidden = !hasText || listening;
-      micLabel.hidden = hasText;
-      micHint.hidden = hasText;
-      mic.classList.toggle('rp-voice-start-compact', hasText);
+      micLabel.textContent = hasText ? 'Add more by voice' : 'Start talking';
+      const micAction = hasText ? 'Add more by voice (Chrome)' : 'Start talking (Chrome)';
+      mic.setAttribute('aria-label', micAction);
+      mic.title = micAction;
+      micHint.hidden = hasText || listening || Boolean(voiceStatus.textContent);
+      mic.classList.toggle('rp-voice-start-secondary', hasText);
     };
     if (VoiceRecognition) {
       mic.addEventListener('click', () =>
@@ -1017,10 +1044,10 @@ class ReviewPrototypeWidget {
           syncActions: syncComposerActions,
         })
       );
-      voiceControls.append(mic, wave, voiceStatus, cancelVoice, stopVoice);
+      voiceControls.append(mic, micHint, wave, voiceStatus, cancelVoice, stopVoice);
       commentField.classList.add('rp-has-voice');
     }
-    commentField.append(textarea, voiceControls);
+    commentField.append(textarea);
     dismiss.addEventListener('click', () => {
       this.cancelDictation({ restore: false });
       this.draft = null;
@@ -1043,7 +1070,7 @@ class ReviewPrototypeWidget {
     });
     textarea.addEventListener('input', syncComposerActions);
     actions.append(send);
-    form.append(header, name, commentField, actions);
+    form.append(header, name, voiceControls, commentField, actions);
     this.root.append(form);
     this.composer = form;
     this.composerDraft = this.draft;
@@ -1060,6 +1087,8 @@ class ReviewPrototypeWidget {
   renderCard() {
     this.card?.remove();
     this.card = null;
+    this.cardAnchor?.remove();
+    this.cardAnchor = null;
     const comment = this.selectedComment;
     if (!comment || comment.scope !== this.currentScope()) return;
     const card = document.createElement('article');
@@ -1087,7 +1116,35 @@ class ReviewPrototypeWidget {
     card.append(header, context, message);
     this.root.append(card);
     this.card = card;
-    this.placeFloating(card, comment.x * this.surface.width, comment.y * this.surface.height);
+    const point = {
+      x: comment.x * this.surface.width,
+      y: comment.y * this.surface.height,
+    };
+    this.placeCommentCard(card, point.x, point.y);
+    const anchor = document.createElement('span');
+    anchor.className = 'rp-card-anchor';
+    anchor.setAttribute('aria-hidden', 'true');
+    anchor.style.left = `${point.x}px`;
+    anchor.style.top = `${point.y}px`;
+    this.root.append(anchor);
+    this.cardAnchor = anchor;
+  }
+
+  placeCommentCard(element, x, y) {
+    const width = Math.min(320, Math.max(240, this.surface.width - 24));
+    element.style.width = `${width}px`;
+    const height = element.getBoundingClientRect().height || 180;
+    const gap = 24;
+    const maximumLeft = Math.max(12, this.surface.width - width - 12);
+    const maximumTop = Math.max(12, this.surface.height - height - 12);
+    const below = y + gap;
+    const above = y - height - gap;
+    let top;
+    if (below <= maximumTop) top = below;
+    else if (above >= 12) top = above;
+    else top = y < this.surface.height / 2 ? maximumTop : 12;
+    element.style.left = `${clamp(x - width / 2, 12, maximumLeft)}px`;
+    element.style.top = `${clamp(top, 12, maximumTop)}px`;
   }
 
   placeFloating(element, x, y) {
