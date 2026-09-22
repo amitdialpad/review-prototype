@@ -33,6 +33,15 @@ all feedback appears in one inbox.
 9. Verify every returned route, token persistence, click and drag comments, modal placement, cross-screen inbox,
    author initials/colors, Done state, and GET/POST from separate browser contexts.
 
+## Voice and browser fallback
+
+- Return one set of review links. Never generate separate voice and typing URLs, and never include a diagnostic browser-capability parameter in a reviewer handoff.
+- When the installed widget supports it, initialize `voiceInput: 'chrome'`. Runtime detection gives supported Google Chrome reviewers the voice-first composer. Safari, Edge, and unsupported browsers automatically receive the ordinary name, textarea, and Add flow with no microphone or voice copy.
+- Prefer the reviewer's regional browser language over a generic document language. Provide a short `voicePhrases` list for product names and important prototype terminology when useful. Contextual phrase biasing is optional and must be feature-detected.
+- Treat voice output as an editable draft, never submit it automatically, and append later voice sessions to the existing text.
+- Verify the Chrome path and a temporarily forced/config-disabled fallback. In the fallback, confirm no voice UI appears, typing works, and Add appears only after text exists. Remove the temporary override before generating or returning links.
+- Do not add a paid transcription service or another backend without explicit authorization.
+
 ## Hosted storage
 
 GitHub hosts the source, but shared review requires the included Netlify Functions + Blobs service or a compatible HTTPS
