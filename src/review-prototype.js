@@ -559,7 +559,7 @@ class ReviewPrototypeWidget {
     session.finish();
   }
 
-  startDictation({ textarea, send, field, mic, wave, cancel, stop, status }) {
+  startDictation({ textarea, send, field, mic, wave, cancel, stop, status, syncActions }) {
     const Recognition = this.voiceRecognitionConstructor();
     if (!Recognition || this.dictation) return;
     const recognition = new Recognition();
@@ -589,6 +589,7 @@ class ReviewPrototypeWidget {
       send.disabled = active;
       status.classList.toggle('rp-voice-error', state === 'error');
       status.textContent = message;
+      syncActions();
       if (this.composer && this.draft) this.placeFloating(this.composer, this.draft.x, this.draft.y);
     };
     session.finish = () => {
@@ -631,6 +632,7 @@ class ReviewPrototypeWidget {
       const caret = Math.min(textarea.value.length, selectionStart + insertedLength);
       textarea.setSelectionRange(caret, caret);
       textarea.scrollTop = textarea.scrollHeight;
+      syncActions();
     };
     recognition.onerror = event => {
       if (this.dictation !== session || session.cancelled || event.error === 'aborted') return;
@@ -943,6 +945,10 @@ class ReviewPrototypeWidget {
     const label = document.createElement('span');
     label.className = 'rp-context-label';
     label.textContent = this.draft.elementLabel;
+    const header = document.createElement('header');
+    header.className = 'rp-composer-header';
+    const dismiss = button('rp-plain-icon', 'Cancel comment', ICONS.close);
+    header.append(label, dismiss);
     const name = document.createElement('input');
     name.type = 'text';
     name.maxLength = 80;
@@ -953,15 +959,12 @@ class ReviewPrototypeWidget {
     const textarea = document.createElement('textarea');
     textarea.maxLength = 4000;
     textarea.rows = 3;
-    textarea.placeholder = 'Talk or type your feedback';
+    const VoiceRecognition = this.voiceRecognitionConstructor();
+    textarea.placeholder = VoiceRecognition ? 'Or type your feedback' : 'Leave a comment';
     textarea.setAttribute('aria-label', 'Comment');
     const actions = document.createElement('div');
     actions.className = 'rp-actions';
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'rp-secondary';
-    cancel.textContent = 'Cancel';
-    cancel.setAttribute('aria-label', 'Cancel comment');
+    actions.hidden = true;
     const send = document.createElement('button');
     send.type = 'submit';
     send.className = 'rp-primary';
@@ -988,7 +991,14 @@ class ReviewPrototypeWidget {
     voiceStatus.className = 'rp-voice-status';
     voiceStatus.setAttribute('role', 'status');
     voiceStatus.setAttribute('aria-live', 'polite');
-    if (this.voiceRecognitionConstructor()) {
+    const syncComposerActions = () => {
+      const hasText = Boolean(textarea.value.trim());
+      const listening = commentField.classList.contains('rp-listening');
+      actions.hidden = !hasText || listening;
+      micLabel.hidden = hasText;
+      mic.classList.toggle('rp-voice-start-compact', hasText);
+    };
+    if (VoiceRecognition) {
       mic.addEventListener('click', () =>
         this.startDictation({
           textarea,
@@ -999,13 +1009,14 @@ class ReviewPrototypeWidget {
           cancel: cancelVoice,
           stop: stopVoice,
           status: voiceStatus,
+          syncActions: syncComposerActions,
         })
       );
       voiceControls.append(mic, wave, voiceStatus, cancelVoice, stopVoice);
       commentField.classList.add('rp-has-voice');
     }
     commentField.append(textarea, voiceControls);
-    cancel.addEventListener('click', () => {
+    dismiss.addEventListener('click', () => {
       this.cancelDictation({ restore: false });
       this.draft = null;
       this.render();
@@ -1015,16 +1026,23 @@ class ReviewPrototypeWidget {
       void this.createComment({ authorName: name.value, message: textarea.value });
     });
     textarea.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        dismiss.click();
+        return;
+      }
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         form.requestSubmit();
       }
     });
-    actions.append(cancel, send);
-    form.append(label, name, commentField, actions);
+    textarea.addEventListener('input', syncComposerActions);
+    actions.append(send);
+    form.append(header, name, commentField, actions);
     this.root.append(form);
     this.composer = form;
     this.composerDraft = this.draft;
+    syncComposerActions();
     this.placeFloating(form, this.draft.x, this.draft.y);
     if (typeof ResizeObserver === 'function') {
       this.composerResizeObserver = new ResizeObserver(() => {

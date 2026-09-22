@@ -170,6 +170,19 @@
   border-radius: 14px;
 }
 
+.rp-composer-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rp-composer-header .rp-context-label {
+  min-width: 0;
+  flex: 1;
+}
+
 .rp-panel[hidden] {
   display: none;
 }
@@ -372,6 +385,7 @@
 .rp-voice-start {
   display: flex;
   width: auto;
+  flex: 0 0 auto;
   gap: 6px;
   align-items: center;
   justify-content: center;
@@ -381,13 +395,25 @@
   font-weight: 650;
 }
 
-.rp-voice-start:hover {
+.rp-voice-button.rp-voice-start:hover {
   background: var(--rp-accent);
   color: white;
 }
 
 .rp-voice-start span {
   line-height: 1;
+}
+
+.rp-voice-start span[hidden] {
+  display: none;
+}
+
+.rp-voice-start-compact {
+  width: 30px;
+  flex-basis: 30px;
+  padding: 0;
+  background: var(--rp-soft);
+  color: var(--rp-accent-strong);
 }
 
 .rp-voice-button[hidden] {
@@ -491,6 +517,10 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.rp-actions[hidden] {
+  display: none;
 }
 
 .rp-primary,
