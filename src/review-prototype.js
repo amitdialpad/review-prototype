@@ -58,10 +58,43 @@ export function mergeDictationTranscript(value, transcript, selectionStart, sele
   return `${before}${leadingSpace}${spoken}${trailingSpace}${after}`.slice(0, maxLength);
 }
 
-function isGoogleChrome() {
-  const brands = navigator.userAgentData?.brands || [];
+export function preferredSpeechLanguage({ configured = '', browserLanguages = [], resolvedLocale = '', documentLanguage = '' } = {}) {
+  if (configured.trim()) return configured.trim();
+  const languages = browserLanguages.filter(Boolean);
+  const primary = languages[0] || '';
+  if (primary.includes('-')) return primary;
+  const matchingRegionalLanguage = languages.find(language => language.startsWith(`${primary}-`));
+  if (matchingRegionalLanguage) return matchingRegionalLanguage;
+  if (resolvedLocale && (!primary || resolvedLocale.split('-')[0] === primary)) return resolvedLocale;
+  return primary || documentLanguage || 'en-US';
+}
+
+export function speechContextPhrases(values, maximum = 20) {
+  const phrases = [];
+  for (const value of values) {
+    const phrase = String(value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!phrase || phrases.some(existing => existing.toLocaleLowerCase() === phrase.toLocaleLowerCase())) continue;
+    phrases.push(phrase);
+    if (phrases.length >= maximum) break;
+  }
+  return phrases;
+}
+
+export function isGoogleChrome(browserNavigator = {}) {
+  const brands = browserNavigator.userAgentData?.brands || [];
   if (brands.some(brand => brand.brand === 'Google Chrome')) return true;
-  return /(?:Chrome|CriOS)\//.test(navigator.userAgent) && !/(?:Edg|OPR|SamsungBrowser)\//.test(navigator.userAgent);
+  const userAgent = browserNavigator.userAgent || '';
+  return /(?:Chrome|CriOS)\//.test(userAgent) && !/(?:Edg|OPR|SamsungBrowser)\//.test(userAgent);
+}
+
+export function commentComposerState({ hasText = false, listening = false, voiceSupported = false } = {}) {
+  return {
+    showAdd: hasText && !listening,
+    showVoiceControls: voiceSupported,
+    showVoiceHint: voiceSupported && !hasText && !listening,
+    voiceLabel: hasText ? 'Add more by voice' : 'Start talking',
+    placeholder: voiceSupported ? 'Type your feedback' : 'Leave a comment',
+  };
 }
 
 function hashRoute(url) {
@@ -161,6 +194,7 @@ class ReviewPrototypeWidget {
       pollInterval: 5000,
       ignoreQuery: [],
       voiceInput: false,
+      voicePhrases: [],
       contextSelector: '[data-review-context], dialog[open], [role="dialog"][aria-modal="true"]',
       ...configuration,
     };
@@ -538,7 +572,7 @@ class ReviewPrototypeWidget {
   }
 
   voiceRecognitionConstructor() {
-    if (this.config.voiceInput !== 'chrome' || !isGoogleChrome()) return null;
+    if (this.config.voiceInput !== 'chrome' || !isGoogleChrome(navigator)) return null;
     return window.SpeechRecognition || window.webkitSpeechRecognition || null;
   }
 
@@ -597,7 +631,9 @@ class ReviewPrototypeWidget {
       if (this.composer && this.draft) this.placeFloating(this.composer, this.draft.x, this.draft.y);
     };
     session.finish = () => {
-      setState(session.error ? 'error' : 'idle', session.error);
+      const completionMessage =
+        session.error || (session.manualStop && session.transcript ? 'Check the transcript, then Add.' : '');
+      setState(session.error ? 'error' : 'idle', completionMessage);
       textarea.readOnly = false;
       send.disabled = false;
       textarea.focus();
@@ -608,7 +644,31 @@ class ReviewPrototypeWidget {
     this.dictation = session;
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = this.config.voiceLanguage || document.documentElement.lang || navigator.language || 'en-US';
+    recognition.lang = preferredSpeechLanguage({
+      configured: this.config.voiceLanguage,
+      browserLanguages: navigator.languages?.length ? [...navigator.languages] : [navigator.language],
+      resolvedLocale: Intl.DateTimeFormat().resolvedOptions().locale,
+      documentLanguage: document.documentElement.lang,
+    });
+    const Phrase = window.SpeechRecognitionPhrase;
+    if (Phrase && 'phrases' in recognition) {
+      const routePhrase = window.location.pathname
+        .split('/')
+        .filter(Boolean)
+        .at(-1)
+        ?.replaceAll('-', ' ');
+      const phrases = speechContextPhrases([
+        ...(Array.isArray(this.config.voicePhrases) ? this.config.voicePhrases : []),
+        this.draft?.elementLabel,
+        routePhrase,
+        document.title,
+      ]);
+      try {
+        recognition.phrases = phrases.map(phrase => new Phrase(phrase, 4));
+      } catch {
+        // Contextual biasing is optional and must never block ordinary dictation.
+      }
+    }
     recognition.onstart = () => {
       if (this.dictation === session) {
         setState('listening', 'Listening…');
@@ -984,7 +1044,8 @@ class ReviewPrototypeWidget {
     textarea.maxLength = 4000;
     textarea.rows = 3;
     const VoiceRecognition = this.voiceRecognitionConstructor();
-    textarea.placeholder = VoiceRecognition ? 'Type your feedback' : 'Leave a comment';
+    const voiceSupported = Boolean(VoiceRecognition);
+    textarea.placeholder = commentComposerState({ voiceSupported }).placeholder;
     textarea.setAttribute('aria-label', 'Comment');
     const actions = document.createElement('div');
     actions.className = 'rp-actions';
@@ -1021,16 +1082,17 @@ class ReviewPrototypeWidget {
     const syncComposerActions = () => {
       const hasText = Boolean(textarea.value.trim());
       const listening = commentField.classList.contains('rp-listening');
+      const state = commentComposerState({ hasText, listening, voiceSupported });
       commentField.classList.toggle('rp-has-comment', hasText);
-      actions.hidden = !hasText || listening;
-      micLabel.textContent = hasText ? 'Add more by voice' : 'Start talking';
+      actions.hidden = !state.showAdd;
+      micLabel.textContent = state.voiceLabel;
       const micAction = hasText ? 'Add more by voice (Chrome)' : 'Start talking (Chrome)';
       mic.setAttribute('aria-label', micAction);
       mic.title = micAction;
-      micHint.hidden = hasText || listening || Boolean(voiceStatus.textContent);
+      micHint.hidden = !state.showVoiceHint || Boolean(voiceStatus.textContent);
       mic.classList.toggle('rp-voice-start-secondary', hasText);
     };
-    if (VoiceRecognition) {
+    if (voiceSupported) {
       mic.addEventListener('click', () =>
         this.startDictation({
           textarea,

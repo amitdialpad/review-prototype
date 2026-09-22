@@ -45,11 +45,14 @@
     <script type="module">
       import { ReviewPrototype } from './review-prototype.js';
       document.querySelector('#open-dialog').addEventListener('click', () => document.querySelector('dialog').showModal());
+      const demoParameters = new URLSearchParams(window.location.search);
       ReviewPrototype.init({
         projectId: 'review-prototype-demo',
         apiUrl: '__REVIEW_API_URL__' || window.location.origin,
         router: 'history',
-        voiceInput: 'chrome',
+        ignoreQuery: ['voice'],
+        voiceInput: demoParameters.get('voice') === 'off' ? false : 'chrome',
+        voicePhrases: ['Review Prototype', 'browser prototype', 'feedback'],
       });
     </script>
   </body>

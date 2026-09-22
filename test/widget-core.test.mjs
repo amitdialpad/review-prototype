@@ -2,12 +2,54 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   authorPresentation,
+  commentComposerState,
+  isGoogleChrome,
   mergeDictationTranscript,
   parseReviewSession,
+  preferredSpeechLanguage,
   reviewValueFromUrl,
   routeScopeFromUrl,
+  speechContextPhrases,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('uses a regional browser language instead of a generic document language', () => {
+  assert.equal(
+    preferredSpeechLanguage({ browserLanguages: ['en'], resolvedLocale: 'en-IN', documentLanguage: 'en' }),
+    'en-IN'
+  );
+  assert.equal(preferredSpeechLanguage({ configured: 'en-GB', browserLanguages: ['en-IN'] }), 'en-GB');
+});
+
+test('enables voice only for Google Chrome and keeps Safari on the typing fallback', () => {
+  assert.equal(
+    isGoogleChrome({ userAgent: 'Mozilla/5.0 Version/18.0 Safari/605.1.15', userAgentData: { brands: [] } }),
+    false
+  );
+  assert.equal(
+    isGoogleChrome({ userAgent: 'Mozilla/5.0 Chrome/142.0.0.0 Safari/537.36', userAgentData: { brands: [] } }),
+    true
+  );
+  assert.equal(
+    isGoogleChrome({ userAgent: 'Mozilla/5.0 Edg/142.0.0.0 Chrome/142.0.0.0', userAgentData: { brands: [] } }),
+    false
+  );
+  assert.deepEqual(commentComposerState({ voiceSupported: false, hasText: false }), {
+    showAdd: false,
+    showVoiceControls: false,
+    showVoiceHint: false,
+    voiceLabel: 'Start talking',
+    placeholder: 'Leave a comment',
+  });
+  assert.equal(commentComposerState({ voiceSupported: false, hasText: true }).showAdd, true);
+});
+
+test('deduplicates and bounds contextual speech phrases', () => {
+  assert.deepEqual(speechContextPhrases(['Dialpad', ' dialpad ', 'AI Receptionist'], 2), [
+    'Dialpad',
+    'AI Receptionist',
+  ]);
+});
 
 test('places dictated text at the caret without overwriting typed text', () => {
   assert.equal(mergeDictationTranscript('Change this copy', 'please', 7, 7), 'Change please this copy');
