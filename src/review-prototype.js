@@ -1193,7 +1193,10 @@ class ReviewPrototypeWidget {
   }
 
   placeCommentCard(element, x, y) {
-    const width = Math.min(320, Math.max(240, this.surface.width - 24));
+    const isLongComment = (element.querySelector('p')?.textContent.length || 0) > 240;
+    const preferredWidth = isLongComment ? 380 : 320;
+    const minimumWidth = isLongComment ? 280 : 240;
+    const width = Math.min(preferredWidth, Math.max(minimumWidth, this.surface.width - 24));
     element.style.width = `${width}px`;
     const height = element.getBoundingClientRect().height || 180;
     const gap = 24;

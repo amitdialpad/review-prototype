@@ -177,6 +177,12 @@
   border-radius: 14px;
 }
 
+.rp-card {
+  max-height: calc(100% - 24px);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
 .rp-composer-header {
   display: flex;
   min-width: 0;
@@ -574,8 +580,23 @@
 }
 
 .rp-card p {
+  min-height: 0;
   margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-color: var(--rp-border) transparent;
+  scrollbar-width: thin;
   white-space: pre-wrap;
+}
+
+.rp-card p::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rp-card p::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--rp-border);
 }
 
 .rp-card-anchor {
