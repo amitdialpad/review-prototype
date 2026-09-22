@@ -370,8 +370,11 @@
 }
 
 .rp-voice-start {
+  display: flex;
   width: auto;
   gap: 6px;
+  align-items: center;
+  justify-content: center;
   padding: 0 10px;
   background: var(--rp-accent-strong);
   color: white;
