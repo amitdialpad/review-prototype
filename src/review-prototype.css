@@ -369,6 +369,24 @@
   pointer-events: auto;
 }
 
+.rp-voice-start {
+  width: auto;
+  gap: 6px;
+  padding: 0 10px;
+  background: var(--rp-accent-strong);
+  color: white;
+  font-weight: 650;
+}
+
+.rp-voice-start:hover {
+  background: var(--rp-accent);
+  color: white;
+}
+
+.rp-voice-start span {
+  line-height: 1;
+}
+
 .rp-voice-button[hidden] {
   display: none;
 }
@@ -427,12 +445,12 @@
   animation-delay: -540ms;
 }
 
-.rp-voice-stop {
+.rp-voice-finish {
   background: var(--rp-accent-strong);
   color: white;
 }
 
-.rp-voice-stop:hover {
+.rp-voice-finish:hover {
   background: var(--rp-accent);
   color: white;
 }

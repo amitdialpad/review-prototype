@@ -12,7 +12,6 @@ const ICONS = {
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
-  stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>',
 };
 
 function clamp(value, minimum, maximum) {
@@ -581,8 +580,7 @@ class ReviewPrototypeWidget {
     const setState = (state, message = '') => {
       const active = state === 'requesting' || state === 'listening' || state === 'stopping';
       field.classList.toggle('rp-listening', active);
-      mic.classList.toggle('rp-voice-active', active);
-      mic.disabled = active;
+      mic.hidden = active;
       wave.hidden = !active;
       cancel.hidden = !active;
       stop.hidden = !active;
@@ -626,6 +624,13 @@ class ReviewPrototypeWidget {
         selectionEnd,
         textarea.maxLength
       );
+      const insertedLength = Math.max(
+        0,
+        textarea.value.length - (originalValue.length - (selectionEnd - selectionStart))
+      );
+      const caret = Math.min(textarea.value.length, selectionStart + insertedLength);
+      textarea.setSelectionRange(caret, caret);
+      textarea.scrollTop = textarea.scrollHeight;
     };
     recognition.onerror = event => {
       if (this.dictation !== session || session.cancelled || event.error === 'aborted') return;
@@ -948,7 +953,7 @@ class ReviewPrototypeWidget {
     const textarea = document.createElement('textarea');
     textarea.maxLength = 4000;
     textarea.rows = 3;
-    textarea.placeholder = 'Leave a comment';
+    textarea.placeholder = 'Talk or type your feedback';
     textarea.setAttribute('aria-label', 'Comment');
     const actions = document.createElement('div');
     actions.className = 'rp-actions';
@@ -966,7 +971,10 @@ class ReviewPrototypeWidget {
     commentField.className = 'rp-comment-field';
     const voiceControls = document.createElement('div');
     voiceControls.className = 'rp-voice-controls';
-    const mic = button('rp-voice-button', 'Start voice input (Chrome)', ICONS.mic);
+    const mic = button('rp-voice-button rp-voice-start', 'Talk to leave feedback (Chrome)', ICONS.mic);
+    const micLabel = document.createElement('span');
+    micLabel.textContent = 'Talk';
+    mic.append(micLabel);
     const wave = document.createElement('span');
     wave.className = 'rp-voice-wave';
     wave.hidden = true;
@@ -974,7 +982,7 @@ class ReviewPrototypeWidget {
     for (let index = 0; index < 4; index += 1) wave.append(document.createElement('span'));
     const cancelVoice = button('rp-voice-button', 'Cancel voice input', ICONS.close);
     cancelVoice.hidden = true;
-    const stopVoice = button('rp-voice-button rp-voice-stop', 'Stop voice input', ICONS.stop);
+    const stopVoice = button('rp-voice-button rp-voice-finish', 'Finish voice input', ICONS.check);
     stopVoice.hidden = true;
     const voiceStatus = document.createElement('span');
     voiceStatus.className = 'rp-voice-status';
