@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  anchoredGeometry,
   authorPresentation,
   commentComposerState,
   isGoogleChrome,
@@ -12,6 +13,27 @@ import {
   speechContextPhrases,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('keeps an anchored comment attached when its element scrolls', () => {
+  const anchor = {
+    path: 'section:nth-of-type(1)',
+    offsetX: 0.75,
+    offsetY: 0.25,
+    selection: { x: 0.1, y: 0.2, width: 0.6, height: 0.4 },
+  };
+  const surface = { left: 0, top: 0 };
+  const before = anchoredGeometry(anchor, { left: 100, top: 300, width: 200, height: 100 }, surface);
+  const after = anchoredGeometry(anchor, { left: 100, top: 180, width: 200, height: 100 }, surface);
+
+  assert.deepEqual(before, {
+    x: 250,
+    y: 325,
+    selection: { x: 120, y: 320, width: 120, height: 40 },
+  });
+  assert.equal(after.x, before.x);
+  assert.equal(after.y, before.y - 120);
+  assert.equal(after.selection.y, before.selection.y - 120);
+});
 
 test('uses a regional browser language instead of a generic document language', () => {
   assert.equal(

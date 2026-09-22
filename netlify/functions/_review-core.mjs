@@ -29,6 +29,21 @@ function normalizeSelection(value) {
   };
 }
 
+const ANCHOR_PATH_PATTERN = /^(?:\$|[a-z][a-z0-9-]*:nth-of-type\([1-9][0-9]*\)(?:>[a-z][a-z0-9-]*:nth-of-type\([1-9][0-9]*\)){0,31})$/;
+
+function normalizeAnchor(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'object') throw new Error('anchor is invalid');
+  const path = boundedText(value.path, 'anchor.path', 1_024);
+  if (!ANCHOR_PATH_PATTERN.test(path)) throw new Error('anchor.path is invalid');
+  return {
+    path,
+    offsetX: normalizedNumber(value.offsetX, 'anchor.offsetX'),
+    offsetY: normalizedNumber(value.offsetY, 'anchor.offsetY'),
+    selection: normalizeSelection(value.selection),
+  };
+}
+
 export function normalizeDraft(value) {
   if (!value || typeof value !== 'object') throw new Error('Comment body is invalid');
   return {
@@ -38,6 +53,7 @@ export function normalizeDraft(value) {
     x: normalizedNumber(value.x, 'x'),
     y: normalizedNumber(value.y, 'y'),
     selection: normalizeSelection(value.selection),
+    anchor: normalizeAnchor(value.anchor),
     elementLabel: boundedText(value.elementLabel, 'elementLabel', 160, { allowEmpty: true }),
   };
 }

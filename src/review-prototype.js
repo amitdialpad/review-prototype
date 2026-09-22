@@ -165,6 +165,62 @@ function elementLabel(element) {
   return text && text.length <= 120 ? text : element.tagName.toLocaleLowerCase();
 }
 
+function elementPath(root, target) {
+  if (!root || !target || !root.contains(target)) return null;
+  if (root === target) return '$';
+  const segments = [];
+  let element = target;
+  while (element && element !== root && segments.length < 32) {
+    const parent = element.parentElement;
+    if (!parent) return null;
+    const siblings = [...parent.children].filter(sibling => sibling.tagName === element.tagName);
+    const index = siblings.indexOf(element);
+    if (index < 0) return null;
+    segments.unshift(`${element.tagName.toLocaleLowerCase()}:nth-of-type(${index + 1})`);
+    element = parent;
+  }
+  return element === root ? segments.join('>') : null;
+}
+
+function sharedAnchorElement(root, start, end) {
+  if (!start || !root.contains(start)) return root;
+  if (!end || !root.contains(end)) return start;
+  const endAncestors = new Set();
+  for (let element = end; element; element = element.parentElement) {
+    endAncestors.add(element);
+    if (element === root) break;
+  }
+  for (let element = start; element; element = element.parentElement) {
+    if (endAncestors.has(element)) return element;
+    if (element === root) break;
+  }
+  return root;
+}
+
+function relativeRect(rect, targetBounds) {
+  return {
+    x: clamp((rect.left - targetBounds.left) / targetBounds.width, 0, 1),
+    y: clamp((rect.top - targetBounds.top) / targetBounds.height, 0, 1),
+    width: clamp(rect.width / targetBounds.width, 0, 1),
+    height: clamp(rect.height / targetBounds.height, 0, 1),
+  };
+}
+
+export function anchoredGeometry(anchor, targetBounds, surfaceBounds) {
+  if (!anchor || !targetBounds?.width || !targetBounds?.height) return null;
+  const x = targetBounds.left - surfaceBounds.left + anchor.offsetX * targetBounds.width;
+  const y = targetBounds.top - surfaceBounds.top + anchor.offsetY * targetBounds.height;
+  const selection = anchor.selection
+    ? {
+        x: targetBounds.left - surfaceBounds.left + anchor.selection.x * targetBounds.width,
+        y: targetBounds.top - surfaceBounds.top + anchor.selection.y * targetBounds.height,
+        width: anchor.selection.width * targetBounds.width,
+        height: anchor.selection.height * targetBounds.height,
+      }
+    : null;
+  return { x, y, selection };
+}
+
 function button(className, label, icon) {
   const element = document.createElement('button');
   element.type = 'button';
@@ -250,6 +306,7 @@ class ReviewPrototypeWidget {
     if (this.frame) window.cancelAnimationFrame(this.frame);
     this.observer?.disconnect();
     window.removeEventListener('resize', this.onSurfaceChange);
+    document.removeEventListener('scroll', this.onSurfaceChange, true);
     window.removeEventListener('popstate', this.onRouteChange);
     window.removeEventListener('hashchange', this.onRouteChange);
     document.removeEventListener('keydown', this.onKeydown);
@@ -345,6 +402,7 @@ class ReviewPrototypeWidget {
       attributeFilter: ['open', 'aria-modal', 'data-review-context'],
     });
     window.addEventListener('resize', this.onSurfaceChange);
+    document.addEventListener('scroll', this.onSurfaceChange, true);
     window.addEventListener('popstate', this.onRouteChange);
     window.addEventListener('hashchange', this.onRouteChange);
     document.addEventListener('keydown', this.onKeydown);
@@ -454,6 +512,85 @@ class ReviewPrototypeWidget {
     );
   }
 
+  anchorRoot() {
+    return this.surface.element || document.body;
+  }
+
+  buildAnchor(startElement, endElement, point, selection) {
+    const root = this.anchorRoot();
+    const target = selection ? sharedAnchorElement(root, startElement, endElement) : startElement;
+    const path = elementPath(root, target);
+    if (!target || !path) return null;
+    const targetBounds = target.getBoundingClientRect();
+    if (!targetBounds.width || !targetBounds.height) return null;
+    const clientX = this.surface.left + point.x;
+    const clientY = this.surface.top + point.y;
+    const selectionBounds = selection
+      ? {
+          left: this.surface.left + selection.x,
+          top: this.surface.top + selection.y,
+          width: selection.width,
+          height: selection.height,
+        }
+      : null;
+    return {
+      path,
+      offsetX: clamp((clientX - targetBounds.left) / targetBounds.width, 0, 1),
+      offsetY: clamp((clientY - targetBounds.top) / targetBounds.height, 0, 1),
+      selection: selectionBounds ? relativeRect(selectionBounds, targetBounds) : null,
+    };
+  }
+
+  anchoredElement(anchor) {
+    if (!anchor?.path) return null;
+    const root = this.anchorRoot();
+    if (anchor.path === '$') return root;
+    try {
+      return root.querySelector(`:scope>${anchor.path}`);
+    } catch {
+      return null;
+    }
+  }
+
+  commentGeometry(comment) {
+    const target = this.anchoredElement(comment.anchor);
+    const geometry = target?.isConnected
+      ? anchoredGeometry(comment.anchor, target.getBoundingClientRect(), this.surface)
+      : null;
+    return (
+      geometry || {
+        x: comment.x * this.surface.width,
+        y: comment.y * this.surface.height,
+        selection: comment.selection
+          ? {
+              x: comment.selection.x * this.surface.width,
+              y: comment.selection.y * this.surface.height,
+              width: comment.selection.width * this.surface.width,
+              height: comment.selection.height * this.surface.height,
+            }
+          : null,
+      }
+    );
+  }
+
+  draftGeometry() {
+    if (!this.draft) return null;
+    const target = this.anchoredElement(this.draft.anchor);
+    return (
+      (target?.isConnected
+        ? anchoredGeometry(this.draft.anchor, target.getBoundingClientRect(), this.surface)
+        : null) || { x: this.draft.x, y: this.draft.y, selection: this.draft.selection }
+    );
+  }
+
+  scrollCommentIntoView(comment) {
+    const target = this.anchoredElement(comment.anchor);
+    if (!target?.isConnected || typeof target.scrollIntoView !== 'function') return false;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    this.scheduleSurfaceSync();
+    return true;
+  }
+
   pointerDown(event) {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -495,10 +632,17 @@ class ReviewPrototypeWidget {
     const point = this.localPoint(event);
     const rect = this.normalizedRect(this.pointerStart, point);
     const dragged = rect.width >= DRAG_THRESHOLD || rect.height >= DRAG_THRESHOLD;
+    const selection = dragged ? rect : null;
     this.draft = {
       x: dragged ? rect.x + rect.width : point.x,
       y: dragged ? rect.y : point.y,
-      selection: dragged ? rect : null,
+      selection,
+      anchor: this.buildAnchor(
+        this.pointerStart.element,
+        this.underlyingElement(event),
+        { x: dragged ? rect.x + rect.width : point.x, y: dragged ? rect.y : point.y },
+        selection
+      ),
       elementLabel: elementLabel(this.pointerStart.element),
     };
     this.pointerStart = null;
@@ -628,7 +772,10 @@ class ReviewPrototypeWidget {
       status.classList.toggle('rp-voice-error', state === 'error');
       status.textContent = message;
       syncActions();
-      if (this.composer && this.draft) this.placeFloating(this.composer, this.draft.x, this.draft.y);
+      if (this.composer && this.draft) {
+        const geometry = this.draftGeometry();
+        this.placeFloating(this.composer, geometry.x, geometry.y);
+      }
     };
     session.finish = () => {
       const completionMessage =
@@ -775,6 +922,7 @@ class ReviewPrototypeWidget {
       if (pending && pending.scope === this.currentScope()) {
         this.selectedComment = pending;
         sessionStorage.removeItem(this.pendingKey());
+        queueMicrotask(() => this.scrollCommentIntoView(pending));
       }
       this.render();
     } catch (error) {
@@ -794,21 +942,23 @@ class ReviewPrototypeWidget {
     if (!name || !text) return;
     this.authorName = name;
     localStorage.setItem(this.authorKey(), name);
-    const selection = this.draft.selection
+    const geometry = this.draftGeometry();
+    const selection = geometry.selection
       ? {
-          x: this.draft.selection.x / this.surface.width,
-          y: this.draft.selection.y / this.surface.height,
-          width: this.draft.selection.width / this.surface.width,
-          height: this.draft.selection.height / this.surface.height,
+          x: geometry.selection.x / this.surface.width,
+          y: geometry.selection.y / this.surface.height,
+          width: geometry.selection.width / this.surface.width,
+          height: geometry.selection.height / this.surface.height,
         }
       : null;
     const draft = {
       scope: this.currentScope(),
       authorName: name,
       message: text,
-      x: this.draft.x / this.surface.width,
-      y: this.draft.y / this.surface.height,
+      x: geometry.x / this.surface.width,
+      y: geometry.y / this.surface.height,
       selection,
+      anchor: this.draft.anchor || null,
       elementLabel: this.draft.elementLabel,
     };
     try {
@@ -879,6 +1029,7 @@ class ReviewPrototypeWidget {
       this.panelOpen = false;
       this.selectedComment = comment;
       this.render();
+      this.scrollCommentIntoView(comment);
       return;
     }
     sessionStorage.setItem(this.pendingKey(), comment.id);
@@ -923,16 +1074,9 @@ class ReviewPrototypeWidget {
     const scope = this.currentScope();
     for (const comment of this.comments) {
       if (comment.scope !== scope || this.resolved.has(comment.id)) continue;
-      if (comment.selection) {
-        const selection = this.drawRect(
-          {
-            x: comment.selection.x * this.surface.width,
-            y: comment.selection.y * this.surface.height,
-            width: comment.selection.width * this.surface.width,
-            height: comment.selection.height * this.surface.height,
-          },
-          'rp-selection'
-        );
+      const geometry = this.commentGeometry(comment);
+      if (geometry.selection) {
+        const selection = this.drawRect(geometry.selection, 'rp-selection');
         this.annotations.append(selection);
       }
       const identity = authorPresentation(comment.authorName);
@@ -940,8 +1084,8 @@ class ReviewPrototypeWidget {
       marker.type = 'button';
       marker.className = 'rp-marker';
       marker.textContent = identity.initial;
-      marker.style.left = `${comment.x * this.surface.width}px`;
-      marker.style.top = `${comment.y * this.surface.height}px`;
+      marker.style.left = `${geometry.x}px`;
+      marker.style.top = `${geometry.y}px`;
       marker.style.background = identity.color;
       marker.setAttribute('aria-label', `Open comment from ${comment.authorName}`);
       marker.addEventListener('click', () => {
@@ -1013,8 +1157,9 @@ class ReviewPrototypeWidget {
   }
 
   renderComposer() {
+    const draftGeometry = this.draftGeometry();
     if (this.composer && this.draft && this.composerDraft === this.draft) {
-      this.placeFloating(this.composer, this.draft.x, this.draft.y);
+      this.placeFloating(this.composer, draftGeometry.x, draftGeometry.y);
       return;
     }
     this.cancelDictation({ restore: false });
@@ -1137,10 +1282,13 @@ class ReviewPrototypeWidget {
     this.composer = form;
     this.composerDraft = this.draft;
     syncComposerActions();
-    this.placeFloating(form, this.draft.x, this.draft.y);
+    this.placeFloating(form, draftGeometry.x, draftGeometry.y);
     if (typeof ResizeObserver === 'function') {
       this.composerResizeObserver = new ResizeObserver(() => {
-        if (this.composer === form && this.draft) this.placeFloating(form, this.draft.x, this.draft.y);
+        if (this.composer === form && this.draft) {
+          const geometry = this.draftGeometry();
+          this.placeFloating(form, geometry.x, geometry.y);
+        }
       });
       this.composerResizeObserver.observe(form);
     }
@@ -1178,10 +1326,7 @@ class ReviewPrototypeWidget {
     card.append(header, context, message);
     this.root.append(card);
     this.card = card;
-    const point = {
-      x: comment.x * this.surface.width,
-      y: comment.y * this.surface.height,
-    };
+    const point = this.commentGeometry(comment);
     this.placeCommentCard(card, point.x, point.y);
     const anchor = document.createElement('span');
     anchor.className = 'rp-card-anchor';

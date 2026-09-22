@@ -65,6 +65,7 @@ test('normalizes bounded comment data and ignores page contents', () => {
       x: 0.2,
       y: 0.4,
       selection: null,
+      anchor: null,
       elementLabel: 'Plan card',
       html: '<main>private</main>',
     }),
@@ -75,8 +76,48 @@ test('normalizes bounded comment data and ignores page contents', () => {
       x: 0.2,
       y: 0.4,
       selection: null,
+      anchor: null,
       elementLabel: 'Plan card',
     }
+  );
+});
+
+test('accepts a privacy-safe structural element anchor', () => {
+  const anchor = {
+    path: 'main:nth-of-type(1)>section:nth-of-type(2)>article:nth-of-type(1)',
+    offsetX: 0.75,
+    offsetY: 0.25,
+    selection: { x: 0.1, y: 0.2, width: 0.6, height: 0.4 },
+  };
+  assert.deepEqual(
+    normalizeDraft({
+      scope: '/billing',
+      authorName: 'Josh',
+      message: 'Keep this attached while scrolling',
+      x: 0.5,
+      y: 0.5,
+      selection: null,
+      anchor,
+      elementLabel: 'Usage card',
+    }).anchor,
+    anchor
+  );
+});
+
+test('rejects selectors that could expose page content or attributes', () => {
+  assert.throws(
+    () =>
+      normalizeDraft({
+        scope: '/billing',
+        authorName: 'Josh',
+        message: 'Unsafe selector',
+        x: 0.5,
+        y: 0.5,
+        selection: null,
+        anchor: { path: '[data-customer="secret"]', offsetX: 0.5, offsetY: 0.5, selection: null },
+        elementLabel: 'Card',
+      }),
+    /anchor\.path is invalid/
   );
 });
 

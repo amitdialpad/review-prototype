@@ -5,6 +5,8 @@ drag anywhere, and leave feedback. They do not need GitHub accounts.
 
 The person who owns the prototype sees every screen's feedback in one inbox. Marking a comment Done removes its pin
 from the page but keeps the comment in the inbox. Pins use each reviewer's first-name initial and a stable color.
+New comments stay attached to the clicked element while the page or a nested container scrolls. Older comments created
+before content anchoring continue to use their original screen position.
 
 In Google Chrome, reviewers can talk instead of typing. Review Prototype inserts Chrome's speech transcript as an
 editable draft and never submits it automatically. Safari, Edge, and unsupported browsers automatically show the
@@ -110,7 +112,9 @@ Every generated link carries the same unguessable session token, so all comments
 
 The default retention is **90 days**. Expired comments stop appearing immediately and a daily Scheduled Function
 permanently deletes them from Netlify Blobs. The service stores only the project/session identifiers, route scope,
-author display name, comment text, normalized position, optional selection rectangle, element label, and timestamps.
+author display name, comment text, normalized fallback position, optional selection rectangle, a structural element
+path with relative offsets, element label, and timestamps. The structural path contains tag names and sibling positions;
+it does not store page text, HTML, IDs, classes, or data attributes.
 
 1. Fork this repository or use it as a template.
 2. In Netlify, choose **Add new project → Import an existing project** and select the fork.

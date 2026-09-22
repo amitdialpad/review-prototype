@@ -176,10 +176,11 @@ Do not call the installation complete until all checks pass on the deployed webs
 9. Comments remain scoped to the route, query state, and active modal/context where they were added.
 10. Selecting an inbox item returns to the correct screen and opens the comment in context.
 11. Marking a comment Done removes its page marker but retains it in the inbox with a Done state.
-12. GET and POST requests to the installer-owned Netlify service succeed from the exact prototype origin; disallowed
+12. A newly created marker stays attached to its clicked element while the page or a nested container scrolls.
+13. GET and POST requests to the installer-owned Netlify service succeed from the exact prototype origin; disallowed
     origins do not receive cross-origin access.
-13. Refreshing and reopening the review link retains shared comments.
-14. The production build and existing relevant tests still pass.
+14. Refreshing and reopening the review link retains shared comments.
+15. The production build and existing relevant tests still pass.
 
 If any of these checks fail, report the exact blocker and do not return the links as customer-ready.
 
