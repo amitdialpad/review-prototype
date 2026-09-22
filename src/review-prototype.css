@@ -330,6 +330,7 @@
 }
 
 .rp-comment-field {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--rp-border);
   border-radius: 9px;
@@ -367,6 +368,16 @@
   display: none;
 }
 
+.rp-comment-field.rp-has-voice:not(.rp-has-comment):not(.rp-listening) .rp-voice-controls {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px;
+}
+
 .rp-voice-button {
   display: grid;
   width: 30px;
@@ -385,23 +396,31 @@
 .rp-voice-start {
   display: flex;
   width: auto;
+  height: auto;
   flex: 0 0 auto;
-  gap: 6px;
+  flex-direction: column;
+  gap: 3px;
   align-items: center;
   justify-content: center;
-  padding: 0 10px;
-  background: var(--rp-accent-strong);
-  color: white;
+  padding: 0;
+  background: transparent;
+  color: var(--rp-text);
   font-weight: 650;
 }
 
 .rp-voice-button.rp-voice-start:hover {
-  background: var(--rp-accent);
-  color: white;
+  background: transparent;
+  color: var(--rp-text);
 }
 
 .rp-voice-start span {
   line-height: 1;
+}
+
+.rp-voice-start .rp-voice-hint {
+  color: var(--rp-muted);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .rp-voice-start span[hidden] {
@@ -410,7 +429,9 @@
 
 .rp-voice-start-compact {
   width: 30px;
+  height: 30px;
   flex-basis: 30px;
+  flex-direction: row;
   padding: 0;
   background: var(--rp-soft);
   color: var(--rp-accent-strong);
@@ -438,6 +459,31 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
+}
+
+.rp-voice-start:not(.rp-voice-start-compact) svg {
+  box-sizing: content-box;
+  width: 20px;
+  height: 20px;
+  padding: 9px;
+  border-radius: 50%;
+  background: var(--rp-accent-strong);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--rp-accent-strong) 24%, transparent);
+  color: white;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.rp-voice-button.rp-voice-start:not(.rp-voice-start-compact):hover svg {
+  background: var(--rp-accent);
+  transform: translateY(-1px);
+}
+
+.rp-voice-start-compact svg {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--rp-accent-strong);
 }
 
 .rp-voice-wave {

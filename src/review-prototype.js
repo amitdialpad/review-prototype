@@ -960,7 +960,7 @@ class ReviewPrototypeWidget {
     textarea.maxLength = 4000;
     textarea.rows = 3;
     const VoiceRecognition = this.voiceRecognitionConstructor();
-    textarea.placeholder = VoiceRecognition ? 'Or type your feedback' : 'Leave a comment';
+    textarea.placeholder = VoiceRecognition ? '' : 'Leave a comment';
     textarea.setAttribute('aria-label', 'Comment');
     const actions = document.createElement('div');
     actions.className = 'rp-actions';
@@ -976,8 +976,11 @@ class ReviewPrototypeWidget {
     voiceControls.className = 'rp-voice-controls';
     const mic = button('rp-voice-button rp-voice-start', 'Talk to leave feedback (Chrome)', ICONS.mic);
     const micLabel = document.createElement('span');
-    micLabel.textContent = 'Talk';
-    mic.append(micLabel);
+    micLabel.textContent = 'Talk to leave feedback';
+    const micHint = document.createElement('span');
+    micHint.className = 'rp-voice-hint';
+    micHint.textContent = 'or start typing';
+    mic.append(micLabel, micHint);
     const wave = document.createElement('span');
     wave.className = 'rp-voice-wave';
     wave.hidden = true;
@@ -994,8 +997,10 @@ class ReviewPrototypeWidget {
     const syncComposerActions = () => {
       const hasText = Boolean(textarea.value.trim());
       const listening = commentField.classList.contains('rp-listening');
+      commentField.classList.toggle('rp-has-comment', hasText);
       actions.hidden = !hasText || listening;
       micLabel.hidden = hasText;
+      micHint.hidden = hasText;
       mic.classList.toggle('rp-voice-start-compact', hasText);
     };
     if (VoiceRecognition) {
