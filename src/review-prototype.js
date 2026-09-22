@@ -191,6 +191,7 @@ class ReviewPrototypeWidget {
     this.originalHistory = null;
     this.dictation = null;
     this.composerDraft = null;
+    this.composerResizeObserver = null;
   }
 
   start() {
@@ -211,6 +212,7 @@ class ReviewPrototypeWidget {
 
   destroy() {
     this.cancelDictation({ restore: false });
+    this.composerResizeObserver?.disconnect();
     if (this.pollTimer) window.clearInterval(this.pollTimer);
     if (this.frame) window.cancelAnimationFrame(this.frame);
     this.observer?.disconnect();
@@ -589,6 +591,7 @@ class ReviewPrototypeWidget {
       send.disabled = active;
       status.classList.toggle('rp-voice-error', state === 'error');
       status.textContent = message;
+      if (this.composer && this.draft) this.placeFloating(this.composer, this.draft.x, this.draft.y);
     };
     session.finish = () => {
       setState(session.error ? 'error' : 'idle', session.error);
@@ -605,7 +608,7 @@ class ReviewPrototypeWidget {
     recognition.lang = this.config.voiceLanguage || document.documentElement.lang || navigator.language || 'en-US';
     recognition.onstart = () => {
       if (this.dictation === session) {
-        setState('listening', 'Listening… Voice is processed by Chrome and is not stored by Review Prototype.');
+        setState('listening', 'Listening…');
       }
     };
     recognition.onresult = event => {
@@ -924,13 +927,14 @@ class ReviewPrototypeWidget {
       return;
     }
     this.cancelDictation({ restore: false });
+    this.composerResizeObserver?.disconnect();
+    this.composerResizeObserver = null;
     this.composer?.remove();
     this.composer = null;
     this.composerDraft = null;
     if (!this.draft) return;
     const form = document.createElement('form');
     form.className = 'rp-composer';
-    this.placeFloating(form, this.draft.x, this.draft.y);
     const label = document.createElement('span');
     label.className = 'rp-context-label';
     label.textContent = this.draft.elementLabel;
@@ -989,7 +993,7 @@ class ReviewPrototypeWidget {
           status: voiceStatus,
         })
       );
-      voiceControls.append(mic, wave, cancelVoice, stopVoice);
+      voiceControls.append(mic, wave, voiceStatus, cancelVoice, stopVoice);
       commentField.classList.add('rp-has-voice');
     }
     commentField.append(textarea, voiceControls);
@@ -1009,10 +1013,17 @@ class ReviewPrototypeWidget {
       }
     });
     actions.append(cancel, send);
-    form.append(label, name, commentField, voiceStatus, actions);
+    form.append(label, name, commentField, actions);
     this.root.append(form);
     this.composer = form;
     this.composerDraft = this.draft;
+    this.placeFloating(form, this.draft.x, this.draft.y);
+    if (typeof ResizeObserver === 'function') {
+      this.composerResizeObserver = new ResizeObserver(() => {
+        if (this.composer === form && this.draft) this.placeFloating(form, this.draft.x, this.draft.y);
+      });
+      this.composerResizeObserver.observe(form);
+    }
   }
 
   renderCard() {
@@ -1022,7 +1033,6 @@ class ReviewPrototypeWidget {
     if (!comment || comment.scope !== this.currentScope()) return;
     const card = document.createElement('article');
     card.className = 'rp-card';
-    this.placeFloating(card, comment.x * this.surface.width, comment.y * this.surface.height);
     const header = document.createElement('header');
     const author = document.createElement('strong');
     author.textContent = comment.authorName;
@@ -1046,13 +1056,15 @@ class ReviewPrototypeWidget {
     card.append(header, context, message);
     this.root.append(card);
     this.card = card;
+    this.placeFloating(card, comment.x * this.surface.width, comment.y * this.surface.height);
   }
 
   placeFloating(element, x, y) {
     const width = Math.min(320, Math.max(240, this.surface.width - 24));
     element.style.width = `${width}px`;
+    const height = element.getBoundingClientRect().height || 240;
     element.style.left = `${clamp(x + 12, 12, Math.max(12, this.surface.width - width - 12))}px`;
-    element.style.top = `${clamp(y + 12, 12, Math.max(12, this.surface.height - 240))}px`;
+    element.style.top = `${clamp(y + 12, 12, Math.max(12, this.surface.height - height - 12))}px`;
   }
 }
 
