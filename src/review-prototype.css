@@ -311,9 +311,126 @@
 }
 
 .rp-composer textarea {
-  min-height: 82px;
+  min-height: 96px;
   padding: 10px;
   resize: vertical;
+}
+
+.rp-comment-field {
+  position: relative;
+}
+
+.rp-comment-field.rp-has-voice textarea {
+  padding-bottom: 44px;
+}
+
+.rp-voice-controls {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  left: 7px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.rp-voice-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rp-muted);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.rp-voice-button[hidden] {
+  display: none;
+}
+
+.rp-voice-button:hover,
+.rp-voice-active {
+  background: var(--rp-soft);
+  color: var(--rp-accent-strong);
+}
+
+.rp-voice-button:disabled {
+  cursor: default;
+}
+
+.rp-voice-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.rp-voice-wave {
+  display: flex;
+  height: 20px;
+  flex: 1;
+  align-items: center;
+  gap: 3px;
+  padding-left: 4px;
+  color: var(--rp-accent-strong);
+}
+
+.rp-voice-wave[hidden] {
+  display: none;
+}
+
+.rp-voice-wave span {
+  width: 3px;
+  height: 7px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: rp-voice-wave 720ms ease-in-out infinite alternate;
+}
+
+.rp-voice-wave span:nth-child(2) {
+  animation-delay: -180ms;
+}
+
+.rp-voice-wave span:nth-child(3) {
+  animation-delay: -360ms;
+}
+
+.rp-voice-wave span:nth-child(4) {
+  animation-delay: -540ms;
+}
+
+.rp-voice-stop {
+  background: var(--rp-accent-strong);
+  color: white;
+}
+
+.rp-voice-stop:hover {
+  background: var(--rp-accent);
+  color: white;
+}
+
+.rp-voice-status {
+  min-height: 0;
+  margin-top: -6px;
+  color: var(--rp-muted);
+  font-size: 11px;
+}
+
+.rp-voice-status:empty {
+  display: none;
+}
+
+.rp-voice-error {
+  color: #b42318;
 }
 
 .rp-composer input:focus,
@@ -379,5 +496,22 @@
   from {
     opacity: 0;
     transform: translateY(3px);
+  }
+}
+
+@keyframes rp-voice-wave {
+  from {
+    height: 5px;
+  }
+
+  to {
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-voice-wave span {
+    height: 10px;
+    animation: none;
   }
 }

@@ -11,6 +11,8 @@ const ICONS = {
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9M7 16.5H5.5a4 4 0 0 1 0-8H9m6 0h3.5a4 4 0 0 1 0 8H15"/></svg>',
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>',
 };
 
 function clamp(value, minimum, maximum) {
@@ -42,6 +44,25 @@ export function createReviewSessionId() {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(24));
   return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+}
+
+export function mergeDictationTranscript(value, transcript, selectionStart, selectionEnd, maxLength = 4000) {
+  const source = String(value || '');
+  const spoken = String(transcript || '').trim();
+  if (!spoken) return source;
+  const start = clamp(Number.isInteger(selectionStart) ? selectionStart : source.length, 0, source.length);
+  const end = clamp(Number.isInteger(selectionEnd) ? selectionEnd : start, start, source.length);
+  const before = source.slice(0, start);
+  const after = source.slice(end);
+  const leadingSpace = before && !/\s$/.test(before) && !/^[,.;:!?)}\]]/.test(spoken) ? ' ' : '';
+  const trailingSpace = after && !/^\s/.test(after) && !/^[,.;:!?)}\]]/.test(after) ? ' ' : '';
+  return `${before}${leadingSpace}${spoken}${trailingSpace}${after}`.slice(0, maxLength);
+}
+
+function isGoogleChrome() {
+  const brands = navigator.userAgentData?.brands || [];
+  if (brands.some(brand => brand.brand === 'Google Chrome')) return true;
+  return /(?:Chrome|CriOS)\//.test(navigator.userAgent) && !/(?:Edg|OPR|SamsungBrowser)\//.test(navigator.userAgent);
 }
 
 function hashRoute(url) {
@@ -140,6 +161,7 @@ class ReviewPrototypeWidget {
       reviewParam: 'review',
       pollInterval: 5000,
       ignoreQuery: [],
+      voiceInput: false,
       contextSelector: '[data-review-context], dialog[open], [role="dialog"][aria-modal="true"]',
       ...configuration,
     };
@@ -167,6 +189,8 @@ class ReviewPrototypeWidget {
     this.pollTimer = null;
     this.frame = null;
     this.originalHistory = null;
+    this.dictation = null;
+    this.composerDraft = null;
   }
 
   start() {
@@ -186,6 +210,7 @@ class ReviewPrototypeWidget {
   }
 
   destroy() {
+    this.cancelDictation({ restore: false });
     if (this.pollTimer) window.clearInterval(this.pollTimer);
     if (this.frame) window.cancelAnimationFrame(this.frame);
     this.observer?.disconnect();
@@ -511,6 +536,133 @@ class ReviewPrototypeWidget {
     }
   }
 
+  voiceRecognitionConstructor() {
+    if (this.config.voiceInput !== 'chrome' || !isGoogleChrome()) return null;
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+
+  cancelDictation({ restore = true } = {}) {
+    const session = this.dictation;
+    if (!session) return;
+    this.dictation = null;
+    session.cancelled = true;
+    try {
+      session.recognition.abort();
+    } catch {
+      // Chrome may already have ended the recognition session.
+    }
+    if (restore && session.textarea.isConnected) {
+      session.textarea.value = session.originalValue;
+      session.textarea.setSelectionRange(session.selectionStart, session.selectionEnd);
+    }
+    session.finish();
+  }
+
+  startDictation({ textarea, send, field, mic, wave, cancel, stop, status }) {
+    const Recognition = this.voiceRecognitionConstructor();
+    if (!Recognition || this.dictation) return;
+    const recognition = new Recognition();
+    const originalValue = textarea.value;
+    const selectionStart = textarea.selectionStart ?? originalValue.length;
+    const selectionEnd = textarea.selectionEnd ?? selectionStart;
+    const session = {
+      recognition,
+      textarea,
+      originalValue,
+      selectionStart,
+      selectionEnd,
+      cancelled: false,
+      transcript: '',
+      error: '',
+      finish: () => {},
+    };
+    const setState = (state, message = '') => {
+      const active = state === 'requesting' || state === 'listening' || state === 'stopping';
+      field.classList.toggle('rp-listening', active);
+      mic.classList.toggle('rp-voice-active', active);
+      mic.disabled = active;
+      wave.hidden = !active;
+      cancel.hidden = !active;
+      stop.hidden = !active;
+      stop.disabled = state === 'stopping';
+      textarea.readOnly = active;
+      send.disabled = active;
+      status.classList.toggle('rp-voice-error', state === 'error');
+      status.textContent = message;
+    };
+    session.finish = () => {
+      setState(session.error ? 'error' : 'idle', session.error);
+      textarea.readOnly = false;
+      send.disabled = false;
+      textarea.focus();
+      const insertedLength = Math.max(0, textarea.value.length - (originalValue.length - (selectionEnd - selectionStart)));
+      const caret = Math.min(textarea.value.length, selectionStart + insertedLength);
+      textarea.setSelectionRange(caret, caret);
+    };
+    this.dictation = session;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = this.config.voiceLanguage || document.documentElement.lang || navigator.language || 'en-US';
+    recognition.onstart = () => {
+      if (this.dictation === session) {
+        setState('listening', 'Listening… Voice is processed by Chrome and is not stored by Review Prototype.');
+      }
+    };
+    recognition.onresult = event => {
+      if (this.dictation !== session) return;
+      const segments = [];
+      for (let index = 0; index < event.results.length; index += 1) {
+        const text = event.results[index]?.[0]?.transcript?.trim();
+        if (text) segments.push(text);
+      }
+      session.transcript = segments.join(' ').replace(/\s+/g, ' ').trim();
+      textarea.value = mergeDictationTranscript(
+        originalValue,
+        session.transcript,
+        selectionStart,
+        selectionEnd,
+        textarea.maxLength
+      );
+    };
+    recognition.onerror = event => {
+      if (this.dictation !== session || session.cancelled || event.error === 'aborted') return;
+      session.error =
+        event.error === 'not-allowed' || event.error === 'service-not-allowed'
+          ? 'Microphone access was blocked. You can keep typing.'
+          : event.error === 'audio-capture'
+            ? 'Chrome could not find a microphone. You can keep typing.'
+            : event.error === 'no-speech'
+              ? 'No speech was detected. Try again or keep typing.'
+              : 'Voice input stopped. You can keep typing.';
+      setState('error', session.error);
+    };
+    recognition.onend = () => {
+      if (this.dictation !== session) return;
+      this.dictation = null;
+      if (!session.error && !session.transcript) session.error = 'No speech was detected. Try again or keep typing.';
+      session.finish();
+    };
+    cancel.onclick = () => this.cancelDictation();
+    stop.onclick = () => {
+      if (this.dictation !== session) return;
+      setState('stopping', 'Finishing your voice comment…');
+      try {
+        recognition.stop();
+      } catch {
+        this.dictation = null;
+        session.finish();
+      }
+    };
+    setState('requesting', 'Starting microphone…');
+    try {
+      recognition.start();
+    } catch {
+      this.dictation = null;
+      session.error = 'Voice input could not start. You can keep typing.';
+      session.finish();
+    }
+  }
+
   async loadComments({ quiet = false } = {}) {
     try {
       if (this.session.mode === 'local') {
@@ -767,8 +919,14 @@ class ReviewPrototypeWidget {
   }
 
   renderComposer() {
+    if (this.composer && this.draft && this.composerDraft === this.draft) {
+      this.placeFloating(this.composer, this.draft.x, this.draft.y);
+      return;
+    }
+    this.cancelDictation({ restore: false });
     this.composer?.remove();
     this.composer = null;
+    this.composerDraft = null;
     if (!this.draft) return;
     const form = document.createElement('form');
     form.className = 'rp-composer';
@@ -800,7 +958,43 @@ class ReviewPrototypeWidget {
     send.className = 'rp-primary';
     send.textContent = 'Add';
     send.setAttribute('aria-label', 'Add comment');
+    const commentField = document.createElement('div');
+    commentField.className = 'rp-comment-field';
+    const voiceControls = document.createElement('div');
+    voiceControls.className = 'rp-voice-controls';
+    const mic = button('rp-voice-button', 'Start voice input (Chrome)', ICONS.mic);
+    const wave = document.createElement('span');
+    wave.className = 'rp-voice-wave';
+    wave.hidden = true;
+    wave.setAttribute('aria-hidden', 'true');
+    for (let index = 0; index < 4; index += 1) wave.append(document.createElement('span'));
+    const cancelVoice = button('rp-voice-button', 'Cancel voice input', ICONS.close);
+    cancelVoice.hidden = true;
+    const stopVoice = button('rp-voice-button rp-voice-stop', 'Stop voice input', ICONS.stop);
+    stopVoice.hidden = true;
+    const voiceStatus = document.createElement('span');
+    voiceStatus.className = 'rp-voice-status';
+    voiceStatus.setAttribute('role', 'status');
+    voiceStatus.setAttribute('aria-live', 'polite');
+    if (this.voiceRecognitionConstructor()) {
+      mic.addEventListener('click', () =>
+        this.startDictation({
+          textarea,
+          send,
+          field: commentField,
+          mic,
+          wave,
+          cancel: cancelVoice,
+          stop: stopVoice,
+          status: voiceStatus,
+        })
+      );
+      voiceControls.append(mic, wave, cancelVoice, stopVoice);
+      commentField.classList.add('rp-has-voice');
+    }
+    commentField.append(textarea, voiceControls);
     cancel.addEventListener('click', () => {
+      this.cancelDictation({ restore: false });
       this.draft = null;
       this.render();
     });
@@ -815,9 +1009,10 @@ class ReviewPrototypeWidget {
       }
     });
     actions.append(cancel, send);
-    form.append(label, name, textarea, actions);
+    form.append(label, name, commentField, voiceStatus, actions);
     this.root.append(form);
     this.composer = form;
+    this.composerDraft = this.draft;
   }
 
   renderCard() {

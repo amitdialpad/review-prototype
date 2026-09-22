@@ -2,11 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   authorPresentation,
+  mergeDictationTranscript,
   parseReviewSession,
   reviewValueFromUrl,
   routeScopeFromUrl,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('places dictated text at the caret without overwriting typed text', () => {
+  assert.equal(mergeDictationTranscript('Change this copy', 'please', 7, 7), 'Change please this copy');
+  assert.equal(mergeDictationTranscript('Change this copy', 'please', 16, 16), 'Change this copy please');
+  assert.equal(mergeDictationTranscript('Hello.', 'world', 5, 5), 'Hello world.');
+});
+
+test('replaces a selected range and respects the comment length limit', () => {
+  assert.equal(mergeDictationTranscript('Change this copy', 'that', 7, 11), 'Change that copy');
+  assert.equal(mergeDictationTranscript('', 'one two three', 0, 0, 7), 'one two');
+});
 
 test('parses only local mode or sufficiently strong shared tokens', () => {
   assert.deepEqual(parseReviewSession('local'), { mode: 'local', id: 'local' });
