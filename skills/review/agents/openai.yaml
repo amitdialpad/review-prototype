@@ -1,0 +1,5 @@
+interface:
+  display_name: "Review"
+  short_description: "Publish prototypes and apply contextual feedback"
+  default_prompt: "Use $review to publish this prototype or apply the active review session's clear comments and redeploy it."
+

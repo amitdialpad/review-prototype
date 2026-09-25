@@ -186,26 +186,31 @@ If any of these checks fail, report the exact blocker and do not return the link
 
 ## Optional: install the Codex skill
 
-The public repository includes the reusable skill at `skills/review-prototype`.
+The public repository includes the complete publish-and-revise skill at `skills/review`.
 
 Copy that directory into the owner's Codex skills directory:
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -R skills/review-prototype ~/.codex/skills/review-prototype
+cp -R skills/review ~/.codex/skills/review
 ```
 
 Run that command from a clone/fork of Review Prototype. If Review Prototype was installed only as a website
-dependency, copy it from `node_modules/review-prototype/skills/review-prototype` instead.
+dependency, copy it from `node_modules/review-prototype/skills/review` instead.
 
-If `~/.codex/skills/review-prototype` already exists, inspect it before replacing or merging it. Start a fresh Codex
+If `~/.codex/skills/review` already exists, inspect it before replacing or merging it. Start a fresh Codex
 session if the newly installed skill is not discovered immediately. Then, from the target website repository, ask:
 
-> Make this prototype reviewable.
+> `$review` Make this prototype reviewable.
 
-The skill should perform the repository integration, maintain `review-prototype.json`, use the established preview
-workflow, verify the deployed experience, and return the route-specific links. It must stop at account, login,
-permission, or release-authorization boundaries that require the owner.
+The skill performs the integration, maintains `review-prototype.json`, uses the established preview workflow, privately
+registers the active session, verifies the deployed experience, and returns the route-specific links. When the owner
+finishes commenting, they say:
+
+> `$review` I’m done commenting. Apply all clear comments from the current review session.
+
+The skill retrieves unhandled feedback, revises and redeploys the same draft preview, and keeps the original links. It
+must stop at account, login, permission, merge, or release-authorization boundaries that require the owner.
 
 ## Security and privacy rules
 

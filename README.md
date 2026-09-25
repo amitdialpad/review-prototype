@@ -20,7 +20,8 @@ same review link and automatically receive the ordinary typing experience with n
 - A framework-neutral browser widget: plain JavaScript and CSS.
 - Netlify Functions + Blobs for shared comments.
 - A manifest and CLI that generate one review session with a link for each important screen.
-- An optional Codex skill that handles integration and link generation for the prototype owner.
+- An optional `$review` Codex skill that handles publishing, link generation, feedback retrieval, revision, and
+  redeployment for the prototype owner.
 
 GitHub hosts the source, contribution workflow, and installable package. Netlify hosts the demo/widget and receives
 shared comments. Each installer deploys a separate Netlify site and owns their data.
@@ -56,6 +57,15 @@ Install directly from GitHub:
 npm install --save-dev github:amitdialpad/review-prototype
 npx review-prototype init --public-dir public/review-prototype
 ```
+
+After the first install, update an existing integration without changing its configuration:
+
+```bash
+npx review-prototype sync --public-dir public/review-prototype
+```
+
+The copied `review-prototype.manifest.json` records the stable package version and asset hashes. The `$review` skill
+checks it on every publish or feedback cycle, so the prototype owner does not manually copy widget updates.
 
 Include the copied assets in the website shell:
 
@@ -134,13 +144,18 @@ their own terms and privacy policies.
 
 ## Optional Codex skill
 
-Copy `skills/review-prototype` into `~/.codex/skills/review-prototype`. Then ask Codex:
+Copy `skills/review` into `~/.codex/skills/review`. Then ask Codex:
 
-> Make this prototype reviewable.
+> `$review` Make this prototype reviewable.
 
-The skill inspects the app, adds the widget, maintains the manifest, publishes through the existing preview workflow,
-and returns the route-specific links. It will stop instead of claiming success if the hosted API or preview is not
-actually reachable.
+The skill inspects the app, adds or upgrades the widget, maintains the manifest, publishes through the existing preview
+workflow, privately records the active session, and returns the route-specific links. After reviewing, say:
+
+> `$review` I’m done commenting. Apply all clear comments from the current review session.
+
+Codex retrieves unhandled comments, revises the same draft PR, verifies its redeployed preview, and returns the same
+links. Comments remain visible until the prototype owner verifies them and marks them Done. The skill stops instead of
+claiming success when the hosted API or preview is not reachable.
 
 ## Contributing
 
