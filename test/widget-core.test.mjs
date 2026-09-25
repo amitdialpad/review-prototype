@@ -11,6 +11,8 @@ import {
   reviewValueFromUrl,
   routeScopeFromUrl,
   speechContextPhrases,
+  completedVoiceStatus,
+  voiceErrorMessage,
   withReviewParam,
 } from '../src/review-prototype.js';
 
@@ -68,6 +70,17 @@ test('enables voice only for Google Chrome and keeps Safari on the typing fallba
     placeholder: 'Speak or type your feedback',
   });
   assert.equal(commentComposerState({ voiceSupported: true, hasText: true, listening: true }).showAdd, false);
+});
+
+test('keeps deliberate finish and cancel actions silent while preserving real voice errors', () => {
+  assert.equal(voiceErrorMessage('audio-capture', { manualStop: true }), '');
+  assert.equal(voiceErrorMessage('network', { cancelled: true }), '');
+  assert.equal(completedVoiceStatus({ manualStop: true, error: 'Voice input stopped. You can keep typing.' }), '');
+  assert.equal(completedVoiceStatus({ cancelled: true }), '');
+  assert.equal(
+    voiceErrorMessage('not-allowed'),
+    'Microphone access was blocked. You can keep typing.'
+  );
 });
 
 test('deduplicates and bounds contextual speech phrases', () => {

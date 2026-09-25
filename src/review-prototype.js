@@ -1,6 +1,7 @@
 const SESSION_PATTERN = /^[a-zA-Z0-9_-]{20,128}$/;
 const CONTEXT_SEPARATOR = '::review-context=';
 const DRAG_THRESHOLD = 5;
+const VOICE_FINISH_GRACE_MS = 800;
 const AUTHOR_COLORS = ['#0e7490', '#0369a1', '#15803d', '#be123c', '#c2410c', '#0f766e', '#1d4ed8', '#b45309'];
 
 const ICONS = {
@@ -93,6 +94,19 @@ export function commentComposerState({ hasText = false, listening = false, voice
     showVoiceControls: voiceSupported,
     placeholder: voiceSupported ? 'Speak or type your feedback' : 'Type your feedback',
   };
+}
+
+export function voiceErrorMessage(error, { cancelled = false, manualStop = false } = {}) {
+  if (cancelled || manualStop || error === 'aborted' || error === 'no-speech') return '';
+  if (error === 'not-allowed' || error === 'service-not-allowed') {
+    return 'Microphone access was blocked. You can keep typing.';
+  }
+  if (error === 'audio-capture') return 'Chrome could not find a microphone. You can keep typing.';
+  return 'Voice input stopped. You can keep typing.';
+}
+
+export function completedVoiceStatus({ error = '', cancelled = false, manualStop = false } = {}) {
+  return cancelled || manualStop ? '' : error;
 }
 
 function hashRoute(url) {
@@ -723,6 +737,7 @@ class ReviewPrototypeWidget {
     this.dictation = null;
     session.cancelled = true;
     if (session.restartTimer) window.clearTimeout(session.restartTimer);
+    if (session.finishTimer) window.clearTimeout(session.finishTimer);
     try {
       session.recognition.abort();
     } catch {
@@ -751,6 +766,7 @@ class ReviewPrototypeWidget {
       cancelled: false,
       manualStop: false,
       restartTimer: null,
+      finishTimer: null,
       committedTranscript: '',
       transcript: '',
       error: '',
@@ -775,7 +791,9 @@ class ReviewPrototypeWidget {
       }
     };
     session.finish = () => {
-      const completionMessage = session.error || (session.manualStop && session.transcript ? 'Transcript ready.' : '');
+      if (session.restartTimer) window.clearTimeout(session.restartTimer);
+      if (session.finishTimer) window.clearTimeout(session.finishTimer);
+      const completionMessage = completedVoiceStatus(session);
       setState(session.error ? 'error' : 'idle', completionMessage);
       textarea.readOnly = false;
       send.disabled = false;
@@ -844,14 +862,10 @@ class ReviewPrototypeWidget {
       syncActions();
     };
     recognition.onerror = event => {
-      if (this.dictation !== session || session.cancelled || event.error === 'aborted') return;
-      if (event.error === 'no-speech') return;
-      session.error =
-        event.error === 'not-allowed' || event.error === 'service-not-allowed'
-          ? 'Microphone access was blocked. You can keep typing.'
-          : event.error === 'audio-capture'
-            ? 'Chrome could not find a microphone. You can keep typing.'
-            : 'Voice input stopped. You can keep typing.';
+      if (this.dictation !== session) return;
+      const message = voiceErrorMessage(event.error, session);
+      if (!message) return;
+      session.error = message;
       setState('error', session.error);
     };
     recognition.onend = () => {
@@ -884,9 +898,17 @@ class ReviewPrototypeWidget {
         session.restartTimer = null;
       }
       setState('stopping', 'Finishing your voice comment…');
+      session.finishTimer = window.setTimeout(() => {
+        session.finishTimer = null;
+        if (this.dictation !== session) return;
+        this.dictation = null;
+        session.finish();
+      }, VOICE_FINISH_GRACE_MS);
       try {
         recognition.stop();
       } catch {
+        if (session.finishTimer) window.clearTimeout(session.finishTimer);
+        session.finishTimer = null;
         this.dictation = null;
         session.finish();
       }
