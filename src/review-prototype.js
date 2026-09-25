@@ -102,6 +102,11 @@ export function commentIsDone(comment) {
   return Boolean(comment?.resolvedAt);
 }
 
+export function isolateReviewUiEvent(event, { preventDefault = false } = {}) {
+  if (preventDefault && event?.cancelable) event.preventDefault?.();
+  event?.stopPropagation?.();
+}
+
 export function sharedCommentStatusEndpoint(apiUrl, projectId, sessionId, commentId) {
   const base = String(apiUrl || '').replace(/\/$/, '');
   const query = new URLSearchParams({ projectId, sessionId, commentId });
@@ -374,6 +379,19 @@ class ReviewPrototypeWidget {
     this.root = document.createElement('div');
     this.root.className = 'rp-root rp-ui';
     this.root.dataset.reviewPrototypeUi = 'true';
+    const containedEvents = [
+      'click',
+      'dblclick',
+      'mousedown',
+      'mouseup',
+      'pointerdown',
+      'pointerup',
+      'touchstart',
+      'touchend',
+    ];
+    for (const eventName of containedEvents) {
+      this.root.addEventListener(eventName, event => isolateReviewUiEvent(event));
+    }
 
     this.capture = document.createElement('div');
     this.capture.className = 'rp-capture';
@@ -1412,7 +1430,10 @@ class ReviewPrototypeWidget {
     controls.className = 'rp-card-controls';
     const done = button('rp-plain-icon', this.resolved.has(comment.id) ? 'Reopen comment' : 'Mark comment as done', ICONS.check);
     done.classList.toggle('rp-done-control', this.resolved.has(comment.id));
-    done.addEventListener('click', () => void this.toggleDone(comment));
+    done.addEventListener('click', event => {
+      isolateReviewUiEvent(event, { preventDefault: true });
+      void this.toggleDone(comment);
+    });
     const close = button('rp-plain-icon', 'Close comment', ICONS.close);
     close.addEventListener('click', () => {
       this.selectedComment = null;

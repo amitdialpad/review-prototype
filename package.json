@@ -1,6 +1,6 @@
 {
   "name": "review-prototype",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Figma-like comments for browser prototypes, shared through one review URL.",
   "type": "module",
   "license": "MIT",

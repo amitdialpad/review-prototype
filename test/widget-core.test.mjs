@@ -6,6 +6,7 @@ import {
   commentComposerState,
   commentIsDone,
   isGoogleChrome,
+  isolateReviewUiEvent,
   mergeDictationTranscript,
   parseReviewSession,
   preferredSpeechLanguage,
@@ -17,6 +18,22 @@ import {
   voiceErrorMessage,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('contains review controls so they cannot trigger host-page interactions', () => {
+  let prevented = 0;
+  let stopped = 0;
+  isolateReviewUiEvent(
+    {
+      cancelable: true,
+      preventDefault: () => { prevented += 1; },
+      stopPropagation: () => { stopped += 1; },
+    },
+    { preventDefault: true }
+  );
+
+  assert.equal(prevented, 1);
+  assert.equal(stopped, 1);
+});
 
 test('uses the canonical Netlify Function endpoint for shared Done updates', () => {
   assert.equal(

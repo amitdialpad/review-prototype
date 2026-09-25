@@ -52,6 +52,8 @@ commands.
 - Reviewer markers are colored rounded-square initials. Done status is shared, Done comments remain in inbox history,
   and Done comments are excluded from the work queue by default. Reopened comments restore their marker and return to
   the work queue.
+- Review controls contain their clicks and pointer events. Marking Done or reopening never triggers the host
+  prototype's navigation, submission, click-away behavior, or page reload.
 - Store text and privacy-safe anchor geometry only. Never store audio, screenshots, page HTML, credentials, form
   values, console logs, or network traces.
 - A review URL is bearer access. Use prototype or synthetic data, exact allowed origins, bounded writes, and hosted
