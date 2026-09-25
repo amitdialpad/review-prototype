@@ -59,11 +59,15 @@ test('enables voice only for Google Chrome and keeps Safari on the typing fallba
   assert.deepEqual(commentComposerState({ voiceSupported: false, hasText: false }), {
     showAdd: false,
     showVoiceControls: false,
-    showVoiceHint: false,
-    voiceLabel: 'Start talking',
-    placeholder: 'Leave a comment',
+    placeholder: 'Type your feedback',
   });
   assert.equal(commentComposerState({ voiceSupported: false, hasText: true }).showAdd, true);
+  assert.deepEqual(commentComposerState({ voiceSupported: true, hasText: false }), {
+    showAdd: false,
+    showVoiceControls: true,
+    placeholder: 'Speak or type your feedback',
+  });
+  assert.equal(commentComposerState({ voiceSupported: true, hasText: true, listening: true }).showAdd, false);
 });
 
 test('deduplicates and bounds contextual speech phrases', () => {

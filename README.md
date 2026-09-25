@@ -8,9 +8,9 @@ from the page but keeps the comment in the inbox. Pins use each reviewer's first
 New comments stay attached to the clicked element while the page or a nested container scrolls. Older comments created
 before content anchoring continue to use their original screen position.
 
-In Google Chrome, reviewers can talk instead of typing. Review Prototype inserts Chrome's speech transcript as an
-editable draft and never submits it automatically. Safari, Edge, and unsupported browsers automatically show the
-ordinary typing experience using the same review link.
+In supported Google Chrome, selecting a comment target immediately attempts dictation inside the compact dark composer.
+The transcript stays editable and is never submitted automatically. Safari, Edge, and unsupported browsers use the
+same review link and automatically receive the ordinary typing experience with no voice UI.
 <img width="503" height="397" alt="Screenshot 2026-09-18 at 06 32 26" src="https://github.com/user-attachments/assets/b26d28b8-569e-4890-bea7-f81cb30efe8d" />
 <img width="518" height="288" alt="Screenshot 2026-09-18 at 06 32 37" src="https://github.com/user-attachments/assets/2a9ae99d-733b-4def-b4a9-6b2a82fb7ede" />
 <img width="519" height="327" alt="Screenshot 2026-09-18 at 06 33 28" src="https://github.com/user-attachments/assets/4d07ca05-cd4c-4b55-baab-4b6ff0e583bb" />

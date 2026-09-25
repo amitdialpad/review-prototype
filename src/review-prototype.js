@@ -1,7 +1,7 @@
 const SESSION_PATTERN = /^[a-zA-Z0-9_-]{20,128}$/;
 const CONTEXT_SEPARATOR = '::review-context=';
 const DRAG_THRESHOLD = 5;
-const AUTHOR_COLORS = ['#5f3dc4', '#1864ab', '#2b8a3e', '#a61e4d', '#c2410c', '#087f5b', '#364fc7', '#862e9c'];
+const AUTHOR_COLORS = ['#0e7490', '#0369a1', '#15803d', '#be123c', '#c2410c', '#0f766e', '#1d4ed8', '#b45309'];
 
 const ICONS = {
   comment:
@@ -91,9 +91,7 @@ export function commentComposerState({ hasText = false, listening = false, voice
   return {
     showAdd: hasText && !listening,
     showVoiceControls: voiceSupported,
-    showVoiceHint: voiceSupported && !hasText && !listening,
-    voiceLabel: hasText ? 'Add more by voice' : 'Start talking',
-    placeholder: voiceSupported ? 'Type your feedback' : 'Leave a comment',
+    placeholder: voiceSupported ? 'Speak or type your feedback' : 'Type your feedback',
   };
 }
 
@@ -650,7 +648,6 @@ class ReviewPrototypeWidget {
     this.drawHover(null);
     this.drawDraftSelection(null);
     this.render();
-    queueMicrotask(() => this.composer?.querySelector('textarea')?.focus());
   }
 
   cancelPointer() {
@@ -738,7 +735,7 @@ class ReviewPrototypeWidget {
     session.finish();
   }
 
-  startDictation({ textarea, send, field, mic, wave, cancel, stop, status, syncActions }) {
+  startDictation({ textarea, name, focusNameOnFinish, send, field, mic, wave, cancel, stop, status, syncActions }) {
     const Recognition = this.voiceRecognitionConstructor();
     if (!Recognition || this.dictation) return;
     const recognition = new Recognition();
@@ -778,15 +775,15 @@ class ReviewPrototypeWidget {
       }
     };
     session.finish = () => {
-      const completionMessage =
-        session.error || (session.manualStop && session.transcript ? 'Check the transcript, then Add.' : '');
+      const completionMessage = session.error || (session.manualStop && session.transcript ? 'Transcript ready.' : '');
       setState(session.error ? 'error' : 'idle', completionMessage);
       textarea.readOnly = false;
       send.disabled = false;
-      textarea.focus();
       const insertedLength = Math.max(0, textarea.value.length - (originalValue.length - (selectionEnd - selectionStart)));
       const caret = Math.min(textarea.value.length, selectionStart + insertedLength);
       textarea.setSelectionRange(caret, caret);
+      if (!session.error && session.transcript && focusNameOnFinish && name?.isConnected) name.focus();
+      else textarea.focus();
     };
     this.dictation = session;
     recognition.continuous = true;
@@ -1185,6 +1182,7 @@ class ReviewPrototypeWidget {
     name.autocomplete = 'name';
     name.value = this.session.mode === 'local' ? this.authorName || 'You' : this.authorName;
     name.setAttribute('aria-label', 'Your name');
+    const needsName = this.session.mode === 'shared' && !this.authorName;
     const textarea = document.createElement('textarea');
     textarea.maxLength = 4000;
     textarea.rows = 3;
@@ -1204,13 +1202,7 @@ class ReviewPrototypeWidget {
     commentField.className = 'rp-comment-field';
     const voiceControls = document.createElement('div');
     voiceControls.className = 'rp-voice-controls';
-    const mic = button('rp-voice-button rp-voice-start', 'Talk to leave feedback (Chrome)', ICONS.mic);
-    const micLabel = document.createElement('span');
-    micLabel.textContent = 'Start talking';
-    const micHint = document.createElement('span');
-    micHint.className = 'rp-voice-hint';
-    micHint.textContent = 'or type below';
-    mic.append(micLabel);
+    const mic = button('rp-voice-button rp-voice-start', 'Add feedback by voice', ICONS.mic);
     const wave = document.createElement('span');
     wave.className = 'rp-voice-wave';
     wave.hidden = true;
@@ -1230,28 +1222,27 @@ class ReviewPrototypeWidget {
       const state = commentComposerState({ hasText, listening, voiceSupported });
       commentField.classList.toggle('rp-has-comment', hasText);
       actions.hidden = !state.showAdd;
-      micLabel.textContent = state.voiceLabel;
-      const micAction = hasText ? 'Add more by voice (Chrome)' : 'Start talking (Chrome)';
+      const micAction = hasText ? 'Add more feedback by voice' : 'Add feedback by voice';
       mic.setAttribute('aria-label', micAction);
       mic.title = micAction;
-      micHint.hidden = !state.showVoiceHint || Boolean(voiceStatus.textContent);
-      mic.classList.toggle('rp-voice-start-secondary', hasText);
     };
+    const startVoice = () =>
+      this.startDictation({
+        textarea,
+        name,
+        focusNameOnFinish: needsName,
+        send,
+        field: commentField,
+        mic,
+        wave,
+        cancel: cancelVoice,
+        stop: stopVoice,
+        status: voiceStatus,
+        syncActions: syncComposerActions,
+      });
     if (voiceSupported) {
-      mic.addEventListener('click', () =>
-        this.startDictation({
-          textarea,
-          send,
-          field: commentField,
-          mic,
-          wave,
-          cancel: cancelVoice,
-          stop: stopVoice,
-          status: voiceStatus,
-          syncActions: syncComposerActions,
-        })
-      );
-      voiceControls.append(mic, micHint, wave, voiceStatus, cancelVoice, stopVoice);
+      mic.addEventListener('click', startVoice);
+      voiceControls.append(mic, wave, voiceStatus, cancelVoice, stopVoice);
       commentField.classList.add('rp-has-voice');
     }
     commentField.append(textarea);
@@ -1277,7 +1268,9 @@ class ReviewPrototypeWidget {
     });
     textarea.addEventListener('input', syncComposerActions);
     actions.append(send);
-    form.append(header, name, voiceControls, commentField, actions);
+    form.append(header, commentField, voiceControls);
+    if (needsName) form.append(name);
+    form.append(actions);
     this.root.append(form);
     this.composer = form;
     this.composerDraft = this.draft;
@@ -1292,6 +1285,8 @@ class ReviewPrototypeWidget {
       });
       this.composerResizeObserver.observe(form);
     }
+    if (voiceSupported && !textarea.value.trim()) startVoice();
+    else textarea.focus();
   }
 
   renderCard() {

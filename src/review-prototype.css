@@ -1,13 +1,16 @@
 :root {
-  --rp-accent: #3f3f46;
-  --rp-accent-strong: #18181b;
-  --rp-text: #18181b;
-  --rp-muted: #71717a;
-  --rp-surface: #ffffff;
-  --rp-border: #dedee3;
-  --rp-soft: #f4f4f5;
-  --rp-done: #52525b;
-  --rp-shadow: 0 18px 50px rgb(0 0 0 / 16%);
+  --rp-accent: #a1a1aa;
+  --rp-accent-strong: #fafafa;
+  --rp-on-accent: #18181b;
+  --rp-text: #fafafa;
+  --rp-muted: #a1a1aa;
+  --rp-surface: #18181b;
+  --rp-surface-raised: #27272a;
+  --rp-border: #3f3f46;
+  --rp-soft: #27272a;
+  --rp-done: #86efac;
+  --rp-danger: #fca5a5;
+  --rp-shadow: 0 18px 50px rgb(0 0 0 / 38%);
 }
 
 .rp-root,
@@ -18,6 +21,7 @@
 .rp-root {
   position: fixed;
   z-index: 2147483000;
+  color-scheme: dark;
   color: var(--rp-text);
   font: 14px/1.4 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   pointer-events: none;
@@ -82,7 +86,7 @@
 .rp-toolbar {
   position: absolute;
   z-index: 5;
-  right: 16px;
+  left: 50%;
   bottom: 16px;
   display: flex;
   gap: 4px;
@@ -92,6 +96,7 @@
   background: var(--rp-surface);
   box-shadow: var(--rp-shadow);
   pointer-events: auto;
+  transform: translateX(-50%);
 }
 
 .rp-icon-button,
@@ -115,7 +120,7 @@
 .rp-icon-button:hover,
 .rp-icon-button.rp-active {
   background: var(--rp-soft);
-  color: var(--rp-accent-strong);
+  color: var(--rp-text);
 }
 
 .rp-icon-button.rp-copied {
@@ -146,7 +151,7 @@
   border: 2px solid var(--rp-surface);
   border-radius: 50%;
   background: var(--rp-accent-strong);
-  color: white;
+  color: var(--rp-on-accent);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
@@ -309,7 +314,7 @@
 }
 
 .rp-error {
-  color: #b42318;
+  color: var(--rp-danger);
 }
 
 .rp-composer,
@@ -317,9 +322,15 @@
   position: absolute;
   z-index: 7;
   display: grid;
-  gap: 10px;
-  padding: 14px;
-  border-radius: 14px;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.rp-composer {
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .rp-composer input,
@@ -327,7 +338,7 @@
   width: 100%;
   border: 1px solid var(--rp-border);
   border-radius: 9px;
-  background: var(--rp-surface);
+  background: var(--rp-surface-raised);
   color: var(--rp-text);
   outline: none;
 }
@@ -337,7 +348,8 @@
 }
 
 .rp-composer textarea {
-  min-height: 96px;
+  min-height: 88px;
+  max-height: 220px;
   padding: 10px;
   resize: vertical;
 }
@@ -347,7 +359,7 @@
   overflow: hidden;
   border: 1px solid var(--rp-border);
   border-radius: 9px;
-  background: var(--rp-surface);
+  background: var(--rp-surface-raised);
 }
 
 .rp-comment-field textarea {
@@ -360,7 +372,13 @@
 
 .rp-comment-field:focus-within {
   border-color: var(--rp-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rp-accent) 18%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rp-accent) 26%, transparent);
+}
+
+.rp-composer input::placeholder,
+.rp-composer textarea::placeholder {
+  color: var(--rp-muted);
+  opacity: 1;
 }
 
 .rp-comment-field textarea:focus {
@@ -370,7 +388,7 @@
 
 .rp-voice-controls {
   display: flex;
-  min-height: 36px;
+  min-height: 30px;
   align-items: center;
   gap: 8px;
   pointer-events: none;
@@ -396,47 +414,12 @@
 }
 
 .rp-voice-start {
-  display: flex;
-  width: auto;
-  height: 36px;
-  flex: 0 0 auto;
-  gap: 7px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  background: var(--rp-accent-strong);
-  color: white;
-  font-weight: 650;
-}
-
-.rp-voice-button.rp-voice-start:hover {
-  background: var(--rp-accent);
-  color: white;
-}
-
-.rp-voice-start span {
-  line-height: 1;
-}
-
-.rp-voice-hint {
-  color: var(--rp-muted);
-  font-size: 12px;
-  font-weight: 400;
-  pointer-events: none;
-}
-
-.rp-voice-hint[hidden] {
-  display: none;
-}
-
-.rp-voice-start-secondary {
   border: 1px solid var(--rp-border);
-  background: var(--rp-surface);
+  background: var(--rp-surface-raised);
   color: var(--rp-text);
 }
 
-.rp-voice-button.rp-voice-start-secondary:hover {
-  border-color: var(--rp-border);
+.rp-voice-button.rp-voice-start:hover {
   background: var(--rp-soft);
   color: var(--rp-text);
 }
@@ -448,7 +431,7 @@
 .rp-voice-button:hover,
 .rp-voice-active {
   background: var(--rp-soft);
-  color: var(--rp-accent-strong);
+  color: var(--rp-text);
 }
 
 .rp-voice-button:disabled {
@@ -472,7 +455,7 @@
   align-items: center;
   gap: 3px;
   padding-left: 4px;
-  color: var(--rp-accent-strong);
+  color: var(--rp-text);
 }
 
 .rp-voice-wave[hidden] {
@@ -501,12 +484,12 @@
 
 .rp-voice-finish {
   background: var(--rp-accent-strong);
-  color: white;
+  color: var(--rp-on-accent);
 }
 
 .rp-voice-finish:hover {
-  background: var(--rp-accent);
-  color: white;
+  background: #e4e4e7;
+  color: var(--rp-on-accent);
 }
 
 .rp-voice-status {
@@ -522,12 +505,12 @@
 }
 
 .rp-voice-error {
-  color: #b42318;
+  color: var(--rp-danger);
 }
 
 .rp-composer input:focus {
   border-color: var(--rp-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rp-accent) 18%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rp-accent) 26%, transparent);
 }
 
 .rp-context-label {
@@ -560,7 +543,7 @@
 .rp-primary {
   border: 1px solid var(--rp-accent-strong);
   background: var(--rp-accent-strong);
-  color: white;
+  color: var(--rp-on-accent);
 }
 
 .rp-primary:disabled {
