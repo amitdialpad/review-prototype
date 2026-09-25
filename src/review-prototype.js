@@ -100,6 +100,12 @@ export function commentIsDone(comment) {
   return comment?.status === 'done' || Boolean(comment?.resolvedAt);
 }
 
+export function sharedCommentStatusEndpoint(apiUrl, projectId, sessionId, commentId) {
+  const base = String(apiUrl || '').replace(/\/$/, '');
+  const query = new URLSearchParams({ projectId, sessionId, commentId });
+  return `${base}/.netlify/functions/review-comments?${query}`;
+}
+
 export function voiceErrorMessage(error, { cancelled = false, manualStop = false } = {}) {
   if (cancelled || manualStop || error === 'aborted' || error === 'no-speech') return '';
   if (error === 'not-allowed' || error === 'service-not-allowed') {
@@ -965,7 +971,12 @@ class ReviewPrototypeWidget {
   }
 
   commentEndpoint(commentId) {
-    return `${this.commentsEndpoint()}/${encodeURIComponent(commentId)}`;
+    return sharedCommentStatusEndpoint(
+      this.config.apiUrl,
+      this.config.projectId,
+      this.session.id,
+      commentId
+    );
   }
 
   async updateSharedCommentStatus(commentId) {

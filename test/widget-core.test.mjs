@@ -11,11 +11,24 @@ import {
   preferredSpeechLanguage,
   reviewValueFromUrl,
   routeScopeFromUrl,
+  sharedCommentStatusEndpoint,
   speechContextPhrases,
   completedVoiceStatus,
   voiceErrorMessage,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('uses the canonical Netlify Function endpoint for shared Done updates', () => {
+  assert.equal(
+    sharedCommentStatusEndpoint(
+      'https://comments.example/',
+      'billing prototype',
+      'review-session-token-123456',
+      'comment-id-123456789012345'
+    ),
+    'https://comments.example/.netlify/functions/review-comments?projectId=billing+prototype&sessionId=review-session-token-123456&commentId=comment-id-123456789012345'
+  );
+});
 
 test('treats hosted Done state as inbox history rather than active feedback', () => {
   assert.equal(commentIsDone({ status: 'done' }), true);
