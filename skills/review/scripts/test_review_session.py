@@ -6,6 +6,7 @@ import io
 import json
 import os
 import stat
+import subprocess
 import tempfile
 import threading
 import time
@@ -43,6 +44,37 @@ class ReviewSessionTest(unittest.TestCase):
         self.state = Path(self.temporary.name) / "state"
         self.repo = Path(self.temporary.name) / "repo"
         self.repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        (self.repo / "README.md").write_text("fixture\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.repo), "add", "README.md"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Review Test",
+                "-c",
+                "user.email=review@example.invalid",
+                "commit",
+                "-q",
+                "-m",
+                "fixture",
+            ],
+            check=True,
+        )
+        self.commit = subprocess.run(
+            ["git", "-C", str(self.repo), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        self.branch = subprocess.run(
+            ["git", "-C", str(self.repo), "branch", "--show-current"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
         self.manifest = Path(self.temporary.name) / "review-prototype.json"
         self.manifest.write_text(
             json.dumps(
@@ -70,10 +102,10 @@ class ReviewSessionTest(unittest.TestCase):
             repo_root=str(self.repo),
             review_url=None,
             repository="example/prototype",
-            branch="prototype/demo",
+            branch=self.branch,
             pull_request=1,
             pull_request_url="https://github.com/example/prototype/pull/1",
-            commit="abc123",
+            commit=self.commit,
             review_prototype_version="0.2.0",
             format="json",
         )
@@ -111,6 +143,12 @@ class ReviewSessionTest(unittest.TestCase):
         arguments.review_url = [exact]
         receipt = review_session.register_session(arguments)
         self.assertEqual(receipt["links"], [{"label": "Overview", "url": exact}])
+
+    def test_rejects_an_unknown_deployed_commit(self):
+        arguments = self.arguments()
+        arguments.commit = "not-a-real-commit"
+        with self.assertRaisesRegex(review_session.SessionError, "deployed commit"):
+            review_session.register_session(arguments)
 
     def test_rejects_exact_review_url_with_a_different_session(self):
         arguments = self.arguments()
@@ -154,7 +192,7 @@ class ReviewSessionTest(unittest.TestCase):
             if arguments == ("rev-parse", "--show-toplevel"):
                 return str(self.repo)
             if arguments == ("branch", "--show-current"):
-                return "prototype/demo"
+                return self.branch
             return ""
 
         with patch.object(review_session, "git_value", side_effect=git_value):

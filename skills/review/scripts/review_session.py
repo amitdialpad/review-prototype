@@ -186,6 +186,10 @@ def register_session(arguments: argparse.Namespace) -> dict[str, Any]:
         for item, exact_url in zip(links, arguments.review_url, strict=True):
             validate_exact_review_url(exact_url, arguments.base_url, manifest, session_id)
             item["url"] = exact_url
+    requested_commit = arguments.commit or git_value(repo_root, "rev-parse", "HEAD")
+    deployed_commit = git_value(repo_root, "rev-parse", "--verify", f"{requested_commit}^{{commit}}")
+    if not requested_commit or not deployed_commit:
+        raise SessionError("The deployed commit must identify a commit in the prototype repository")
     with receipt_lock(session_id):
         existing = read_private_receipt(path) if path.exists() else {}
         now = utc_now()
@@ -202,7 +206,7 @@ def register_session(arguments: argparse.Namespace) -> dict[str, Any]:
             "branch": arguments.branch or git_value(repo_root, "branch", "--show-current"),
             "pullRequest": arguments.pull_request,
             "pullRequestUrl": arguments.pull_request_url or "",
-            "deployedCommit": arguments.commit or git_value(repo_root, "rev-parse", "HEAD"),
+            "deployedCommit": deployed_commit,
             "reviewPrototypeVersion": arguments.review_prototype_version or "",
             "createdAt": existing.get("createdAt") or now,
             "updatedAt": now,
