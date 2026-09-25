@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { cp, mkdir, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatReviewLinks, generateReviewLinks, readManifest } from '../scripts/review-links.mjs';
@@ -20,12 +21,12 @@ async function readJson(path) {
   }
 }
 
-async function fileExists(path) {
+async function fileHash(path) {
   try {
-    await readFile(path);
-    return true;
+    const contents = await readFile(path);
+    return `sha256-${createHash('sha256').update(contents).digest('hex')}`;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -37,11 +38,13 @@ async function syncAssets({ printSnippet = false } = {}) {
   const sourceManifest = await readJson(sourceManifestPath);
   if (!sourceManifest) throw new Error('Review Prototype must be built before its assets can be synced.');
   const targetManifest = await readJson(targetManifestPath);
-  const targetAssetsPresent = await Promise.all(
-    ['review-prototype.js', 'review-prototype.css'].map(filename => fileExists(resolve(publicDirectory, filename)))
+  const assetNames = ['review-prototype.js', 'review-prototype.css'];
+  const targetAssetHashes = await Promise.all(
+    assetNames.map(filename => fileHash(resolve(publicDirectory, filename)))
   );
   const changed =
-    targetAssetsPresent.some(present => !present) || JSON.stringify(sourceManifest) !== JSON.stringify(targetManifest);
+    assetNames.some((filename, index) => targetAssetHashes[index] !== sourceManifest.assets[filename]) ||
+    JSON.stringify(sourceManifest) !== JSON.stringify(targetManifest);
   if (changed) {
     await cp(resolve(root, 'dist/review-prototype.js'), resolve(publicDirectory, 'review-prototype.js'));
     await cp(resolve(root, 'dist/review-prototype.css'), resolve(publicDirectory, 'review-prototype.css'));
