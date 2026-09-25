@@ -173,9 +173,14 @@ function readRoute(request) {
   }
   const projectId = url.searchParams.get('projectId') || '';
   const sessionId = url.searchParams.get('sessionId') || '';
+  const commentId = url.searchParams.get('commentId') || null;
   if (!projectId && !sessionId && url.searchParams.get('health') === '1') return { health: true };
-  if (!PROJECT_PATTERN.test(projectId) || !SESSION_PATTERN.test(sessionId)) return null;
-  return { projectId, sessionId };
+  if (
+    !PROJECT_PATTERN.test(projectId) ||
+    !SESSION_PATTERN.test(sessionId) ||
+    (commentId && !COMMENT_PATTERN.test(commentId))
+  ) return null;
+  return { projectId, sessionId, commentId };
 }
 
 export async function cleanupExpired(store, now = Date.now()) {

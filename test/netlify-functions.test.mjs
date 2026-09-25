@@ -233,6 +233,42 @@ test('advertises PATCH for shared Done state', async () => {
   assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, POST, PATCH, OPTIONS');
 });
 
+test('accepts Netlify rewritten comment IDs from the query string', async () => {
+  const store = new MemoryStore();
+  const created = await handleReviewRequest(
+    new Request(endpoint, {
+      method: 'POST',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: '/billing',
+        authorName: 'Sarah',
+        message: 'Resolve through the deployed rewrite',
+        x: 0.2,
+        y: 0.4,
+        selection: null,
+        elementLabel: 'Plan card',
+      }),
+    }),
+    env,
+    store
+  );
+  const comment = await created.json();
+  const rewrittenEndpoint =
+    `https://review-prototype.netlify.app/.netlify/functions/review-comments` +
+    `?projectId=demo&sessionId=${session}&commentId=${comment.id}`;
+  const resolved = await handleReviewRequest(
+    new Request(rewrittenEndpoint, {
+      method: 'PATCH',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    }),
+    env,
+    store
+  );
+  assert.equal(resolved.status, 200);
+  assert.equal((await resolved.json()).status, 'done');
+});
+
 test('rejects an unapproved website origin', async () => {
   const response = await handleReviewRequest(
     new Request(endpoint, { headers: { Origin: 'https://untrusted.example' } }),

@@ -19,7 +19,7 @@ test('syncs versioned assets once and then reports a no-op', async t => {
   assert.equal(JSON.parse(first.stdout).changed, true);
   const manifest = JSON.parse(await readFile(resolve(publicDirectory, 'review-prototype.manifest.json'), 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
-  assert.equal(manifest.packageVersion, '0.2.2');
+  assert.equal(manifest.packageVersion, '0.2.3');
   assert.match(manifest.assets['review-prototype.js'], /^sha256-[a-f0-9]{64}$/);
 
   const second = await execute(process.execPath, [cli, 'sync', '--public-dir', publicDirectory, '--format', 'json']);
