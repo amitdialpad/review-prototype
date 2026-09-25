@@ -175,7 +175,8 @@ Do not call the installation complete until all checks pass on the deployed webs
 8. Internal navigation preserves the exact review token.
 9. Comments remain scoped to the route, query state, and active modal/context where they were added.
 10. Selecting an inbox item returns to the correct screen and opens the comment in context.
-11. Marking a comment Done removes its page marker but retains it in every reviewer's inbox with a shared Done state.
+11. Marking a comment Done removes its page marker but retains it in every reviewer's inbox with a shared Done state;
+    reopening it restores the marker and returns it to the work queue.
 12. A newly created marker stays attached to its clicked element while the page or a nested container scrolls.
 13. GET, POST, and PATCH requests to the installer-owned Netlify service succeed from the exact prototype origin; disallowed
     origins do not receive cross-origin access.
@@ -223,8 +224,8 @@ must stop at account, login, permission, merge, or release-authorization boundar
 - Use exact allowed origins and never `ALLOWED_ORIGINS=*`.
 - The included service limits request sizes and comments per session. Do not remove those protections.
 - Shared comments expire after the configured retention period; the default is 90 days.
-- Done state is shared through the hosted service and excluded from future `$review` work by default. The remembered
-  reviewer name remains browser-local.
+- Done state is shared through the hosted service and excluded from future `$review` work by default. Reopened comments
+  become active feedback again. The remembered reviewer name remains browser-local.
 - Never place Netlify or GitHub tokens in browser code, the manifest, generated links, issues, or documentation.
 
 ## Required handoff to the website owner

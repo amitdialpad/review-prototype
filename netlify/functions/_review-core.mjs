@@ -116,7 +116,7 @@ async function listComments(store, projectId, sessionId, now = Date.now()) {
   return comments.filter(Boolean).sort((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 
-async function markCommentDone(store, projectId, sessionId, commentId, now = Date.now()) {
+async function updateCommentStatus(store, projectId, sessionId, commentId, status, now = Date.now()) {
   const result = await store.list({ prefix: commentPrefix(projectId, sessionId) });
   const blob = result.blobs.find(
     item => expirationFromCommentKey(item.key) > now && item.key.endsWith(`-${commentId}`)
@@ -125,16 +125,22 @@ async function markCommentDone(store, projectId, sessionId, commentId, now = Dat
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const current = await store.getWithMetadata(blob.key, { type: 'json', consistency: 'strong' });
     if (!current?.data) return null;
-    if (current.data.status === 'done') return current.data;
+    if (current.data.status === status) return current.data;
     const updated = {
       ...current.data,
-      status: 'done',
-      resolvedAt: new Date(now).toISOString(),
+      status,
     };
+    if (status === 'done') {
+      updated.resolvedAt = new Date(now).toISOString();
+      delete updated.reopenedAt;
+    } else {
+      delete updated.resolvedAt;
+      updated.reopenedAt = new Date(now).toISOString();
+    }
     const write = await store.setJSON(blob.key, updated, { onlyIfMatch: current.etag });
     if (write.modified) return updated;
   }
-  throw new Error('Comment changed while it was being marked Done. Please try again.');
+  throw new Error('Comment changed while its status was being updated. Please try again.');
 }
 
 async function useWriteSlot(store, projectId, sessionId, now = Date.now()) {
@@ -257,10 +263,10 @@ export async function handleReviewRequest(request, env, store) {
       return json({ error: 'Please wait before updating another comment' }, 429, origin);
     }
     const body = await limitedJsonBody(request);
-    if (!body || typeof body !== 'object' || body.status !== 'done') {
-      return json({ error: 'Comment status must be done' }, 400, origin);
+    if (!body || typeof body !== 'object' || !['open', 'done'].includes(body.status)) {
+      return json({ error: 'Comment status must be open or done' }, 400, origin);
     }
-    const comment = await markCommentDone(store, projectId, sessionId, commentId);
+    const comment = await updateCommentStatus(store, projectId, sessionId, commentId, body.status);
     if (!comment) return json({ error: 'Comment was not found' }, 404, origin);
     return json(comment, 200, origin);
   }

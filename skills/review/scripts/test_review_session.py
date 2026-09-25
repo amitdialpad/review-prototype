@@ -132,19 +132,32 @@ class ReviewSessionTest(unittest.TestCase):
                     "status": "done",
                     "resolvedAt": "2026-01-04T00:00:00Z",
                 },
+                {
+                    "id": "reopened",
+                    "createdAt": "2026-01-05T00:00:00Z",
+                    "message": "Needs work again",
+                    "status": "open",
+                    "resolvedAt": "2026-01-04T00:00:00Z",
+                },
             ]
         }
 
         def opener(*_, **__):
             return Response(payload)
 
-        self.assertEqual([item["id"] for item in review_session.fetch_comments(receipt, opener=opener)], ["one", "two"])
+        self.assertEqual(
+            [item["id"] for item in review_session.fetch_comments(receipt, opener=opener)],
+            ["one", "two", "reopened"],
+        )
         review_session.record_handled(receipt, ["one"], "def456")
         selected = review_session.select_receipt(self.session)
-        self.assertEqual([item["id"] for item in review_session.fetch_comments(selected, opener=opener)], ["two"])
+        self.assertEqual(
+            [item["id"] for item in review_session.fetch_comments(selected, opener=opener)],
+            ["two", "reopened"],
+        )
         self.assertEqual(
             [item["id"] for item in review_session.fetch_comments(selected, include_handled=True, opener=opener)],
-            ["one", "two", "done"],
+            ["one", "two", "done", "reopened"],
         )
         self.assertEqual(selected["handledComments"]["one"]["commit"], "def456")
 

@@ -34,6 +34,7 @@ test('treats hosted Done state as inbox history rather than active feedback', ()
   assert.equal(commentIsDone({ status: 'done' }), true);
   assert.equal(commentIsDone({ resolvedAt: '2026-09-26T00:00:00Z' }), true);
   assert.equal(commentIsDone({ status: 'open' }), false);
+  assert.equal(commentIsDone({ status: 'open', resolvedAt: '2026-09-26T00:00:00Z' }), false);
   assert.equal(commentIsDone({}), false);
 });
 

@@ -8,7 +8,7 @@ The shared service stores:
 - the current prototype route/context;
 - the reviewer's display name and comment;
 - normalized marker or selection coordinates and a short element label;
-- open/Done status with its resolved timestamp;
+- open/Done status with resolved or reopened timestamps;
 - created and expiry timestamps.
 
 It does not collect screenshots, page HTML, form contents, credentials, cookies, console output, analytics, or network

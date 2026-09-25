@@ -197,6 +197,28 @@ test('marks a shared comment Done without deleting it from inbox history', async
   const comments = (await listed.json()).comments;
   assert.equal(comments.length, 1);
   assert.equal(comments[0].status, 'done');
+
+  const reopened = await handleReviewRequest(
+    new Request(`${endpoint}/${comment.id}`, {
+      method: 'PATCH',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'open' }),
+    }),
+    env,
+    store
+  );
+  assert.equal(reopened.status, 200);
+  const reopenedComment = await reopened.json();
+  assert.equal(reopenedComment.status, 'open');
+  assert.equal('resolvedAt' in reopenedComment, false);
+  assert.match(reopenedComment.reopenedAt, /^\d{4}-\d{2}-\d{2}T/);
+
+  const relisted = await handleReviewRequest(
+    new Request(endpoint, { headers: { Origin: 'https://prototype.example' } }),
+    env,
+    store
+  );
+  assert.equal((await relisted.json()).comments[0].status, 'open');
 });
 
 test('rejects unsupported comment status changes and unknown comments', async () => {
@@ -205,7 +227,7 @@ test('rejects unsupported comment status changes and unknown comments', async ()
     new Request(`${endpoint}/550e8400-e29b-41d4-a716-446655440099`, {
       method: 'PATCH',
       headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'open' }),
+      body: JSON.stringify({ status: 'archived' }),
     }),
     env,
     store

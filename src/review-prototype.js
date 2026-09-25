@@ -97,7 +97,9 @@ export function commentComposerState({ hasText = false, listening = false, voice
 }
 
 export function commentIsDone(comment) {
-  return comment?.status === 'done' || Boolean(comment?.resolvedAt);
+  if (comment?.status === 'done') return true;
+  if (comment?.status === 'open') return false;
+  return Boolean(comment?.resolvedAt);
 }
 
 export function sharedCommentStatusEndpoint(apiUrl, projectId, sessionId, commentId) {
@@ -979,11 +981,11 @@ class ReviewPrototypeWidget {
     );
   }
 
-  async updateSharedCommentStatus(commentId) {
+  async updateSharedCommentStatus(commentId, status) {
     const response = await fetch(this.commentEndpoint(commentId), {
       method: 'PATCH',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'done' }),
+      body: JSON.stringify({ status }),
     });
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
@@ -1002,7 +1004,7 @@ class ReviewPrototypeWidget {
       return;
     }
     const results = await Promise.allSettled(
-      pending.map(comment => this.updateSharedCommentStatus(comment.id))
+      pending.map(comment => this.updateSharedCommentStatus(comment.id, 'done'))
     );
     let failed = false;
     results.forEach((result, index) => {
@@ -1079,20 +1081,19 @@ class ReviewPrototypeWidget {
     this.render();
   }
 
-  async markDone(comment) {
-    if (this.resolved.has(comment.id)) {
-      this.selectedComment = null;
-      this.render();
-      return;
-    }
+  async toggleDone(comment) {
+    const wasDone = this.resolved.has(comment.id);
+    const nextStatus = wasDone ? 'open' : 'done';
     try {
       if (this.session.mode === 'local') {
-        this.resolved.add(comment.id);
+        if (wasDone) this.resolved.delete(comment.id);
+        else this.resolved.add(comment.id);
         localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.resolved]));
       } else {
-        const updated = await this.updateSharedCommentStatus(comment.id);
+        const updated = await this.updateSharedCommentStatus(comment.id, nextStatus);
         this.comments = this.comments.map(item => item.id === comment.id ? updated : item);
-        this.resolved.add(comment.id);
+        if (commentIsDone(updated)) this.resolved.add(comment.id);
+        else this.resolved.delete(comment.id);
       }
       this.serviceError = '';
       this.selectedComment = null;
@@ -1409,9 +1410,9 @@ class ReviewPrototypeWidget {
     author.textContent = comment.authorName;
     const controls = document.createElement('span');
     controls.className = 'rp-card-controls';
-    const done = button('rp-plain-icon', this.resolved.has(comment.id) ? 'Comment is done' : 'Mark comment as done', ICONS.check);
+    const done = button('rp-plain-icon', this.resolved.has(comment.id) ? 'Reopen comment' : 'Mark comment as done', ICONS.check);
     done.classList.toggle('rp-done-control', this.resolved.has(comment.id));
-    done.addEventListener('click', () => void this.markDone(comment));
+    done.addEventListener('click', () => void this.toggleDone(comment));
     const close = button('rp-plain-icon', 'Close comment', ICONS.close);
     close.addEventListener('click', () => {
       this.selectedComment = null;

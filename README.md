@@ -5,7 +5,8 @@ drag anywhere, and leave feedback. They do not need GitHub accounts.
 
 The person who owns the prototype sees every screen's feedback in one inbox. Marking a comment Done removes its pin
 from the page but keeps the comment in the shared inbox. Done feedback is history, not new work, so `$review` will not
-pick it up again. Pins use each reviewer's first-name initial and a stable color.
+pick it up again. Reopening it restores its pin and returns it to the work queue. Pins use each reviewer's first-name
+initial and a stable color.
 New comments stay attached to the clicked element while the page or a nested container scrolls. Older comments created
 before content anchoring continue to use their original screen position.
 
@@ -45,7 +46,7 @@ and their name.
 - When you say you are finished commenting, it collects only feedback that still needs attention, updates the same
   prototype, checks the live result, and gives you the same link back.
 - Nothing is treated as implemented until the deployed fix has been verified. You still decide when a comment is Done.
-- Done comments remain in the inbox as useful history, but they never return to the work queue.
+- Done comments remain in the inbox as useful history. Reopening one returns it to the work queue.
 - If several Codex agents are working at once, their progress is combined safely rather than overwritten.
 - If a repository, branch, session, URL, comment, or deployed commit does not match, Review stops safely instead of
   changing the wrong prototype.

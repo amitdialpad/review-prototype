@@ -50,7 +50,8 @@ commands.
 - Keep the neutral dark, voice-first Chrome experience and automatic typing-only fallback elsewhere.
 - Click and drag create content-anchored comments; modal comments stay on the modal; markers follow scrolling.
 - Reviewer markers are colored rounded-square initials. Done status is shared, Done comments remain in inbox history,
-  and Done comments are excluded from the work queue by default.
+  and Done comments are excluded from the work queue by default. Reopened comments restore their marker and return to
+  the work queue.
 - Store text and privacy-safe anchor geometry only. Never store audio, screenshots, page HTML, credentials, form
   values, console logs, or network traces.
 - A review URL is bearer access. Use prototype or synthetic data, exact allowed origins, bounded writes, and hosted

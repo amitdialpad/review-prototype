@@ -294,7 +294,9 @@ def fetch_comments(
     return [
         item
         for item in normalized
-        if item["id"] not in handled and item.get("status") != "done" and not item.get("resolvedAt")
+        if item["id"] not in handled
+        and item.get("status") != "done"
+        and not (not item.get("status") and item.get("resolvedAt"))
     ]
 
 
