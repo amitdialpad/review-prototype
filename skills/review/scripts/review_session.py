@@ -291,7 +291,11 @@ def fetch_comments(
     if include_handled:
         return normalized
     handled = receipt.get("handledComments") if isinstance(receipt.get("handledComments"), dict) else {}
-    return [item for item in normalized if item["id"] not in handled]
+    return [
+        item
+        for item in normalized
+        if item["id"] not in handled and item.get("status") != "done" and not item.get("resolvedAt")
+    ]
 
 
 def record_handled(receipt: dict[str, Any], comment_ids: list[str], commit: str) -> dict[str, Any]:

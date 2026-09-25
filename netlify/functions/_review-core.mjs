@@ -1,4 +1,5 @@
 const SESSION_PATTERN = /^[a-zA-Z0-9_-]{20,128}$/;
+const COMMENT_PATTERN = /^[a-zA-Z0-9_-]{20,128}$/;
 const PROJECT_PATTERN = /^[a-zA-Z0-9._-]{1,100}$/;
 const MAX_BODY_BYTES = 16_384;
 const MAX_COMMENTS_PER_SESSION = 1_000;
@@ -115,6 +116,27 @@ async function listComments(store, projectId, sessionId, now = Date.now()) {
   return comments.filter(Boolean).sort((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 
+async function markCommentDone(store, projectId, sessionId, commentId, now = Date.now()) {
+  const result = await store.list({ prefix: commentPrefix(projectId, sessionId) });
+  const blob = result.blobs.find(
+    item => expirationFromCommentKey(item.key) > now && item.key.endsWith(`-${commentId}`)
+  );
+  if (!blob) return null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const current = await store.getWithMetadata(blob.key, { type: 'json', consistency: 'strong' });
+    if (!current?.data) return null;
+    if (current.data.status === 'done') return current.data;
+    const updated = {
+      ...current.data,
+      status: 'done',
+      resolvedAt: new Date(now).toISOString(),
+    };
+    const write = await store.setJSON(blob.key, updated, { onlyIfMatch: current.etag });
+    if (write.modified) return updated;
+  }
+  throw new Error('Comment changed while it was being marked Done. Please try again.');
+}
+
 async function useWriteSlot(store, projectId, sessionId, now = Date.now()) {
   const minute = Math.floor(now / 60_000);
   const key = `limits/${projectId}/${sessionId}/${minute}`;
@@ -136,13 +158,18 @@ function readRoute(request) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return { health: true };
   const pathMatch = url.pathname.match(
-    /^\/v1\/projects\/([^/]+)\/sessions\/([^/]+)\/comments\/?$/
+    /^\/v1\/projects\/([^/]+)\/sessions\/([^/]+)\/comments(?:\/([^/]+))?\/?$/
   );
   if (pathMatch) {
     const projectId = decodeURIComponent(pathMatch[1]);
     const sessionId = decodeURIComponent(pathMatch[2]);
-    if (!PROJECT_PATTERN.test(projectId) || !SESSION_PATTERN.test(sessionId)) return null;
-    return { projectId, sessionId };
+    const commentId = pathMatch[3] ? decodeURIComponent(pathMatch[3]) : null;
+    if (
+      !PROJECT_PATTERN.test(projectId) ||
+      !SESSION_PATTERN.test(sessionId) ||
+      (commentId && !COMMENT_PATTERN.test(commentId))
+    ) return null;
+    return { projectId, sessionId, commentId };
   }
   const projectId = url.searchParams.get('projectId') || '';
   const sessionId = url.searchParams.get('sessionId') || '';
@@ -184,7 +211,7 @@ export async function handleReviewRequest(request, env, store) {
     if (origin) {
       response.headers.set('Access-Control-Allow-Origin', origin);
       response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
       response.headers.set('Access-Control-Max-Age', '86400');
       response.headers.set('Vary', 'Origin');
     }
@@ -197,12 +224,12 @@ export async function handleReviewRequest(request, env, store) {
     return json({ ok: true, retentionDays: Number(env.RETENTION_DAYS || 90), storage: 'netlify-blobs' }, 200, origin);
   }
 
-  const { projectId, sessionId } = route;
-  if (request.method === 'GET') {
+  const { projectId, sessionId, commentId } = route;
+  if (request.method === 'GET' && !commentId) {
     return json({ comments: await listComments(store, projectId, sessionId) }, 200, origin);
   }
 
-  if (request.method === 'POST') {
+  if (request.method === 'POST' && !commentId) {
     if (!(await useWriteSlot(store, projectId, sessionId))) {
       return json({ error: 'Please wait before adding another comment' }, 429, origin);
     }
@@ -215,9 +242,22 @@ export async function handleReviewRequest(request, env, store) {
     const createdAt = new Date().toISOString();
     const retentionDays = Math.max(1, Math.min(365, Number(env.RETENTION_DAYS || 90)));
     const expiresAt = Date.now() + retentionDays * 86_400_000;
-    const comment = { ...draft, id, sessionId, projectId, createdAt };
+    const comment = { ...draft, id, sessionId, projectId, status: 'open', createdAt };
     await store.setJSON(`${commentPrefix(projectId, sessionId)}${expiresAt}-${id}`, comment, { onlyIfNew: true });
     return json(comment, 201, origin);
+  }
+
+  if (request.method === 'PATCH' && commentId) {
+    if (!(await useWriteSlot(store, projectId, sessionId))) {
+      return json({ error: 'Please wait before updating another comment' }, 429, origin);
+    }
+    const body = await limitedJsonBody(request);
+    if (!body || typeof body !== 'object' || body.status !== 'done') {
+      return json({ error: 'Comment status must be done' }, 400, origin);
+    }
+    const comment = await markCommentDone(store, projectId, sessionId, commentId);
+    if (!comment) return json({ error: 'Comment was not found' }, 404, origin);
+    return json(comment, 200, origin);
   }
 
   return json({ error: 'Method not allowed' }, 405, origin);

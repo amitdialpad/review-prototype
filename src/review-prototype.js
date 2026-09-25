@@ -96,6 +96,10 @@ export function commentComposerState({ hasText = false, listening = false, voice
   };
 }
 
+export function commentIsDone(comment) {
+  return comment?.status === 'done' || Boolean(comment?.resolvedAt);
+}
+
 export function voiceErrorMessage(error, { cancelled = false, manualStop = false } = {}) {
   if (cancelled || manualStop || error === 'aborted' || error === 'no-speech') return '';
   if (error === 'not-allowed' || error === 'service-not-allowed') {
@@ -279,6 +283,7 @@ class ReviewPrototypeWidget {
     );
     this.comments = [];
     this.resolved = new Set();
+    this.legacyResolved = new Set();
     this.authorName = '';
     this.commentMode = false;
     this.panelOpen = false;
@@ -298,7 +303,9 @@ class ReviewPrototypeWidget {
   start() {
     if (!this.session) return this;
     this.authorName = localStorage.getItem(this.authorKey()) || '';
-    this.resolved = new Set(storageJson(this.resolvedKey(), []));
+    const storedResolved = new Set(storageJson(this.resolvedKey(), []));
+    if (this.session.mode === 'local') this.resolved = storedResolved;
+    else this.legacyResolved = storedResolved;
     this.ensureStyles();
     this.buildUi();
     this.installNavigationPersistence();
@@ -934,6 +941,8 @@ class ReviewPrototypeWidget {
         if (!response.ok) throw new Error(`Review service returned ${response.status}`);
         const payload = await response.json();
         this.comments = Array.isArray(payload.comments) ? payload.comments : [];
+        this.resolved = new Set(this.comments.filter(commentIsDone).map(comment => comment.id));
+        await this.syncLegacyDoneComments();
       }
       this.serviceError = '';
       const pendingId = sessionStorage.getItem(this.pendingKey());
@@ -953,6 +962,54 @@ class ReviewPrototypeWidget {
   commentsEndpoint() {
     const base = this.config.apiUrl.replace(/\/$/, '');
     return `${base}/v1/projects/${encodeURIComponent(this.config.projectId)}/sessions/${encodeURIComponent(this.session.id)}/comments`;
+  }
+
+  commentEndpoint(commentId) {
+    return `${this.commentsEndpoint()}/${encodeURIComponent(commentId)}`;
+  }
+
+  async updateSharedCommentStatus(commentId) {
+    const response = await fetch(this.commentEndpoint(commentId), {
+      method: 'PATCH',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(payload?.error || `Review service returned ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async syncLegacyDoneComments() {
+    const pending = this.comments.filter(
+      comment => this.legacyResolved.has(comment.id) && !commentIsDone(comment)
+    );
+    if (!pending.length) {
+      if (this.legacyResolved.size) localStorage.removeItem(this.resolvedKey());
+      this.legacyResolved.clear();
+      return;
+    }
+    const results = await Promise.allSettled(
+      pending.map(comment => this.updateSharedCommentStatus(comment.id))
+    );
+    let failed = false;
+    results.forEach((result, index) => {
+      const commentId = pending[index].id;
+      if (result.status === 'fulfilled') {
+        this.comments = this.comments.map(comment => comment.id === commentId ? result.value : comment);
+        this.resolved.add(commentId);
+        this.legacyResolved.delete(commentId);
+      } else {
+        failed = true;
+      }
+    });
+    if (this.legacyResolved.size) {
+      localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.legacyResolved]));
+    } else {
+      localStorage.removeItem(this.resolvedKey());
+    }
+    if (failed) throw new Error('Could not sync an older Done comment. Please mark it Done again.');
   }
 
   async createComment({ authorName, message }) {
@@ -1011,10 +1068,26 @@ class ReviewPrototypeWidget {
     this.render();
   }
 
-  markDone(comment) {
-    this.resolved.add(comment.id);
-    localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.resolved]));
-    this.selectedComment = null;
+  async markDone(comment) {
+    if (this.resolved.has(comment.id)) {
+      this.selectedComment = null;
+      this.render();
+      return;
+    }
+    try {
+      if (this.session.mode === 'local') {
+        this.resolved.add(comment.id);
+        localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.resolved]));
+      } else {
+        const updated = await this.updateSharedCommentStatus(comment.id);
+        this.comments = this.comments.map(item => item.id === comment.id ? updated : item);
+        this.resolved.add(comment.id);
+      }
+      this.serviceError = '';
+      this.selectedComment = null;
+    } catch (error) {
+      this.serviceError = error instanceof Error ? error.message : 'Could not mark this comment Done.';
+    }
     this.render();
   }
 
@@ -1327,7 +1400,7 @@ class ReviewPrototypeWidget {
     controls.className = 'rp-card-controls';
     const done = button('rp-plain-icon', this.resolved.has(comment.id) ? 'Comment is done' : 'Mark comment as done', ICONS.check);
     done.classList.toggle('rp-done-control', this.resolved.has(comment.id));
-    done.addEventListener('click', () => this.markDone(comment));
+    done.addEventListener('click', () => void this.markDone(comment));
     const close = button('rp-plain-icon', 'Close comment', ICONS.close);
     close.addEventListener('click', () => {
       this.selectedComment = null;

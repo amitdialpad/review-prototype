@@ -143,6 +143,8 @@ test('creates and immediately reads a shared comment with strong-consistency sto
   );
   assert.equal(created.status, 201);
   assert.equal(created.headers.get('Access-Control-Allow-Origin'), 'https://prototype.example');
+  const createdComment = await created.json();
+  assert.equal(createdComment.status, 'open');
 
   const listed = await handleReviewRequest(
     new Request(endpoint, { headers: { Origin: 'https://prototype.example' } }),
@@ -151,6 +153,84 @@ test('creates and immediately reads a shared comment with strong-consistency sto
   );
   assert.equal(listed.status, 200);
   assert.deepEqual((await listed.json()).comments.map(comment => comment.message), ['Tighten this copy']);
+});
+
+test('marks a shared comment Done without deleting it from inbox history', async () => {
+  const store = new MemoryStore();
+  const created = await handleReviewRequest(
+    new Request(endpoint, {
+      method: 'POST',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: '/billing',
+        authorName: 'Sarah',
+        message: 'Tighten this copy',
+        x: 0.2,
+        y: 0.4,
+        selection: null,
+        elementLabel: 'Plan card',
+      }),
+    }),
+    env,
+    store
+  );
+  const comment = await created.json();
+  const resolved = await handleReviewRequest(
+    new Request(`${endpoint}/${comment.id}`, {
+      method: 'PATCH',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    }),
+    env,
+    store
+  );
+  assert.equal(resolved.status, 200);
+  const resolvedComment = await resolved.json();
+  assert.equal(resolvedComment.status, 'done');
+  assert.match(resolvedComment.resolvedAt, /^\d{4}-\d{2}-\d{2}T/);
+
+  const listed = await handleReviewRequest(
+    new Request(endpoint, { headers: { Origin: 'https://prototype.example' } }),
+    env,
+    store
+  );
+  const comments = (await listed.json()).comments;
+  assert.equal(comments.length, 1);
+  assert.equal(comments[0].status, 'done');
+});
+
+test('rejects unsupported comment status changes and unknown comments', async () => {
+  const store = new MemoryStore();
+  const invalid = await handleReviewRequest(
+    new Request(`${endpoint}/550e8400-e29b-41d4-a716-446655440099`, {
+      method: 'PATCH',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'open' }),
+    }),
+    env,
+    store
+  );
+  assert.equal(invalid.status, 400);
+
+  const missing = await handleReviewRequest(
+    new Request(`${endpoint}/550e8400-e29b-41d4-a716-446655440099`, {
+      method: 'PATCH',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    }),
+    env,
+    store
+  );
+  assert.equal(missing.status, 404);
+});
+
+test('advertises PATCH for shared Done state', async () => {
+  const response = await handleReviewRequest(
+    new Request(endpoint, { method: 'OPTIONS', headers: { Origin: 'https://prototype.example' } }),
+    env,
+    new MemoryStore()
+  );
+  assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, POST, PATCH, OPTIONS');
 });
 
 test('rejects an unapproved website origin', async () => {

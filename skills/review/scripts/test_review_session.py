@@ -125,6 +125,13 @@ class ReviewSessionTest(unittest.TestCase):
             "comments": [
                 {"id": "two", "createdAt": "2026-01-02T00:00:00Z", "message": "Second"},
                 {"id": "one", "createdAt": "2026-01-01T00:00:00Z", "message": "First"},
+                {
+                    "id": "done",
+                    "createdAt": "2026-01-03T00:00:00Z",
+                    "message": "Already accepted",
+                    "status": "done",
+                    "resolvedAt": "2026-01-04T00:00:00Z",
+                },
             ]
         }
 
@@ -135,6 +142,10 @@ class ReviewSessionTest(unittest.TestCase):
         review_session.record_handled(receipt, ["one"], "def456")
         selected = review_session.select_receipt(self.session)
         self.assertEqual([item["id"] for item in review_session.fetch_comments(selected, opener=opener)], ["two"])
+        self.assertEqual(
+            [item["id"] for item in review_session.fetch_comments(selected, include_handled=True, opener=opener)],
+            ["one", "two", "done"],
+        )
         self.assertEqual(selected["handledComments"]["one"]["commit"], "def456")
 
     def test_preserves_exact_review_url_when_registering_existing_session(self):

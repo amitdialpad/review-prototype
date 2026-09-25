@@ -4,7 +4,8 @@ Put Figma-like comments directly on a browser prototype. Reviewers open one spec
 drag anywhere, and leave feedback. They do not need GitHub accounts.
 
 The person who owns the prototype sees every screen's feedback in one inbox. Marking a comment Done removes its pin
-from the page but keeps the comment in the inbox. Pins use each reviewer's first-name initial and a stable color.
+from the page but keeps the comment in the shared inbox. Done feedback is history, not new work, so `$review` will not
+pick it up again. Pins use each reviewer's first-name initial and a stable color.
 New comments stay attached to the clicked element while the page or a nested container scrolls. Older comments created
 before content anchoring continue to use their original screen position.
 
@@ -36,6 +37,18 @@ is simply:
 
 The prototype owner needs GitHub, Netlify, and permission to edit the website. Reviewers need only the generated link
 and their name.
+
+## The workflow in plain English
+
+- You keep designing. Review quietly keeps the commenting layer up to date.
+- It privately remembers which repository, branch, preview, review session, and links belong together.
+- When you say you are finished commenting, it collects only feedback that still needs attention, updates the same
+  prototype, checks the live result, and gives you the same link back.
+- Nothing is treated as implemented until the deployed fix has been verified. You still decide when a comment is Done.
+- Done comments remain in the inbox as useful history, but they never return to the work queue.
+- If several Codex agents are working at once, their progress is combined safely rather than overwritten.
+- If a repository, branch, session, URL, comment, or deployed commit does not match, Review stops safely instead of
+  changing the wrong prototype.
 
 ## Try it locally
 
@@ -123,7 +136,7 @@ Every generated link carries the same unguessable session token, so all comments
 The default retention is **90 days**. Expired comments stop appearing immediately and a daily Scheduled Function
 permanently deletes them from Netlify Blobs. The service stores only the project/session identifiers, route scope,
 author display name, comment text, normalized fallback position, optional selection rectangle, a structural element
-path with relative offsets, element label, and timestamps. The structural path contains tag names and sibling positions;
+path with relative offsets, element label, shared open/Done status, and timestamps. The structural path contains tag names and sibling positions;
 it does not store page text, HTML, IDs, classes, or data attributes.
 
 1. Fork this repository or use it as a template.
@@ -153,7 +166,7 @@ workflow, privately records the active session, and returns the route-specific l
 
 > `$review` I’m done commenting. Apply all clear comments from the current review session.
 
-Codex retrieves unhandled comments, revises the same draft PR, verifies its redeployed preview, and returns the same
+Codex retrieves open, unhandled comments, revises the same draft PR, verifies its redeployed preview, and returns the same
 links. Comments remain visible until the prototype owner verifies them and marks them Done. The skill stops instead of
 claiming success when the hosted API or preview is not reachable.
 

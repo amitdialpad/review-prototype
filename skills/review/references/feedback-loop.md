@@ -17,7 +17,8 @@ live outside Git, and the helper repairs their private file permissions when loa
 
 ## Turn comments into work
 
-1. Fetch unhandled comments from the hosted API. Do not call this a Git pull.
+1. Fetch open, unhandled comments from the hosted API. Done comments remain visible as inbox history but must not enter
+   the work queue. Do not call this a Git pull.
 2. Group by route/query scope and modal context. Use the element label and privacy-safe anchor only to locate the
    target in the rendered prototype; inspect the actual implementation before editing.
 3. Apply every clear, in-scope visual, copy, interaction, fixture, or prototype bug comment regardless of author.

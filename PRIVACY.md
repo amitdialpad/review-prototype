@@ -8,6 +8,7 @@ The shared service stores:
 - the current prototype route/context;
 - the reviewer's display name and comment;
 - normalized marker or selection coordinates and a short element label;
+- open/Done status with its resolved timestamp;
 - created and expiry timestamps.
 
 It does not collect screenshots, page HTML, form contents, credentials, cookies, console output, analytics, or network
@@ -17,5 +18,5 @@ deletes expired records daily.
 The person deploying the Netlify site controls the Blobs store and allowed website origins. The session URL is a capability:
 anyone with that URL can read and add comments. Do not place confidential information in a review.
 
-Done state and the remembered reviewer name stay in the current browser's local storage. They are not written to the
-shared service.
+Done state is written to the shared service so every reviewer and the prototype owner sees the same history. The
+remembered reviewer name stays only in the current browser's local storage.
