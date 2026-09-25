@@ -1,6 +1,7 @@
 :root {
   --rp-accent: #a1a1aa;
   --rp-accent-strong: #fafafa;
+  --rp-target: #52e6a4;
   --rp-on-accent: #18181b;
   --rp-text: #fafafa;
   --rp-muted: #a1a1aa;
@@ -57,14 +58,14 @@
 .rp-hover,
 .rp-selection {
   position: absolute;
-  border: 2px solid var(--rp-accent);
+  border: 2px solid var(--rp-target);
   border-radius: 7px;
-  background: color-mix(in srgb, var(--rp-accent) 9%, transparent);
+  background: color-mix(in srgb, var(--rp-target) 9%, transparent);
   pointer-events: none;
 }
 
 .rp-selection-draft {
-  background: color-mix(in srgb, var(--rp-accent) 14%, transparent);
+  background: color-mix(in srgb, var(--rp-target) 14%, transparent);
 }
 
 .rp-marker {
@@ -589,8 +590,8 @@
   height: 12px;
   border: 2px solid white;
   border-radius: 50%;
-  background: var(--rp-accent-strong);
-  box-shadow: 0 0 0 0 rgb(24 24 27 / 34%);
+  background: var(--rp-target);
+  box-shadow: 0 0 0 0 rgb(82 230 164 / 42%);
   pointer-events: none;
   transform: translate(-50%, -50%);
   animation: rp-anchor-pulse 1.15s ease-out 3;
@@ -623,15 +624,15 @@
 
 @keyframes rp-anchor-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(24 24 27 / 34%);
+    box-shadow: 0 0 0 0 rgb(82 230 164 / 42%);
   }
 
   72% {
-    box-shadow: 0 0 0 13px rgb(24 24 27 / 0%);
+    box-shadow: 0 0 0 13px rgb(82 230 164 / 0%);
   }
 
   100% {
-    box-shadow: 0 0 0 0 rgb(24 24 27 / 0%);
+    box-shadow: 0 0 0 0 rgb(82 230 164 / 0%);
   }
 }
 
