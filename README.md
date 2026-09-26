@@ -10,7 +10,10 @@ initial and a stable color.
 New comments stay attached to the clicked element while the page or a nested container scrolls. Older comments created
 before content anchoring continue to use their original screen position.
 
-In supported Google Chrome, selecting a comment target immediately attempts dictation inside the compact dark composer.
+Inbox comments on the current screen open in place. Hosts can ignore deployment-only query parameters when matching
+saved comments and provide SPA navigation for comments that belong to another product state, avoiding a full reload.
+
+In supported Google Chrome, selecting a comment target immediately attempts dictation inside the compact dark composer. If the reviewer starts editing the feedback field, typing takes control immediately: voice capture stops, visible transcript is preserved, and the first edit still lands.
 The transcript stays editable and is never submitted automatically. Safari, Edge, and unsupported browsers use the
 same review link and automatically receive the ordinary typing experience with no voice UI.
 <img width="503" height="397" alt="Screenshot 2026-09-18 at 06 32 26" src="https://github.com/user-attachments/assets/b26d28b8-569e-4890-bea7-f81cb30efe8d" />

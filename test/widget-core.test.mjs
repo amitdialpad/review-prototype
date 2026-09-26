@@ -7,7 +7,9 @@ import {
   commentIsDone,
   isGoogleChrome,
   isolateReviewUiEvent,
+  isTextEditIntent,
   mergeDictationTranscript,
+  normalizeReviewScope,
   parseReviewSession,
   preferredSpeechLanguage,
   reviewValueFromUrl,
@@ -18,6 +20,21 @@ import {
   voiceErrorMessage,
   withReviewParam,
 } from '../src/review-prototype.js';
+
+test('lets text editing take control from automatic dictation without treating navigation as typing', () => {
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'a' }), true);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'Backspace' }), true);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'Enter', shiftKey: true }), true);
+  assert.equal(isTextEditIntent({ type: 'paste' }), true);
+  assert.equal(isTextEditIntent({ type: 'cut' }), true);
+  assert.equal(isTextEditIntent({ type: 'drop' }), true);
+  assert.equal(isTextEditIntent({ type: 'compositionstart' }), true);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'Process', keyCode: 229 }), true);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'ArrowLeft' }), false);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'Tab' }), false);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'a', metaKey: true }), false);
+  assert.equal(isTextEditIntent({ type: 'keydown', key: 'a', defaultPrevented: true }), false);
+});
 
 test('contains review controls so they cannot trigger host-page interactions', () => {
   let prevented = 0;
@@ -157,6 +174,22 @@ test('keeps review token out of history-router scope', () => {
   const url = 'https://example.com/billing?scene=warning&review=550e8400-e29b-41d4-a716-446655440000';
   assert.equal(routeScopeFromUrl(url), '/billing?scene=warning');
   assert.equal(reviewValueFromUrl(url), '550e8400-e29b-41d4-a716-446655440000');
+});
+
+test('normalizes legacy comment scopes using ignored non-product query parameters', () => {
+  const config = { ignoreQuery: ['build'] };
+  assert.equal(
+    normalizeReviewScope('/billing?build=old-build&scene=warning', config),
+    '/billing?scene=warning'
+  );
+  assert.equal(
+    normalizeReviewScope('/billing?scene=warning&build=new-build::review-context=modal%20dialog', config),
+    '/billing?scene=warning::review-context=modal%20dialog'
+  );
+  assert.equal(
+    normalizeReviewScope('/billing?build=old-build&scene=warning', { ...config, router: 'hash' }),
+    '/billing?scene=warning'
+  );
 });
 
 test('supports hash-router review parameters', () => {

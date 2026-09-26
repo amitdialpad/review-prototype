@@ -5,10 +5,8 @@ const VOICE_FINISH_GRACE_MS = 800;
 const AUTHOR_COLORS = ['#0e7490', '#0369a1', '#15803d', '#be123c', '#c2410c', '#0f766e', '#1d4ed8', '#b45309'];
 
 const ICONS = {
-  comment:
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/></svg>',
-  inbox:
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5zM8 8h8M8 12h8M8 16h5"/></svg>',
+  comment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3v-13Z"/></svg>',
+  inbox: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5zM8 8h8M8 12h8M8 16h5"/></svg>',
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9M7 16.5H5.5a4 4 0 0 1 0-8H9m6 0h3.5a4 4 0 0 1 0 8H15"/></svg>',
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
@@ -43,7 +41,10 @@ export function parseReviewSession(value) {
 export function createReviewSessionId() {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replaceAll('=', '');
 }
 
 export function mergeDictationTranscript(value, transcript, selectionStart, selectionEnd, maxLength = 4000) {
@@ -59,7 +60,12 @@ export function mergeDictationTranscript(value, transcript, selectionStart, sele
   return `${before}${leadingSpace}${spoken}${trailingSpace}${after}`.slice(0, maxLength);
 }
 
-export function preferredSpeechLanguage({ configured = '', browserLanguages = [], resolvedLocale = '', documentLanguage = '' } = {}) {
+export function preferredSpeechLanguage({
+  configured = '',
+  browserLanguages = [],
+  resolvedLocale = '',
+  documentLanguage = '',
+} = {}) {
   if (configured.trim()) return configured.trim();
   const languages = browserLanguages.filter(Boolean);
   const primary = languages[0] || '';
@@ -73,7 +79,10 @@ export function preferredSpeechLanguage({ configured = '', browserLanguages = []
 export function speechContextPhrases(values, maximum = 20) {
   const phrases = [];
   for (const value of values) {
-    const phrase = String(value || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    const phrase = String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
     if (!phrase || phrases.some(existing => existing.toLocaleLowerCase() === phrase.toLocaleLowerCase())) continue;
     phrases.push(phrase);
     if (phrases.length >= maximum) break;
@@ -94,6 +103,16 @@ export function commentComposerState({ hasText = false, listening = false, voice
     showVoiceControls: voiceSupported,
     placeholder: voiceSupported ? 'Speak or type your feedback' : 'Type your feedback',
   };
+}
+
+export function isTextEditIntent(event = {}) {
+  if (event.defaultPrevented) return false;
+  if (['beforeinput', 'paste', 'cut', 'drop', 'compositionstart'].includes(event.type)) return true;
+  if (event.type !== 'keydown') return false;
+  if (event.key === 'Backspace' || event.key === 'Delete') return true;
+  if (event.key === 'Enter') return Boolean(event.shiftKey);
+  if (event.key === 'Process' || event.keyCode === 229) return true;
+  return typeof event.key === 'string' && event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
 export function commentIsDone(comment) {
@@ -160,14 +179,17 @@ export function withReviewParam(input, value, { router = 'history', reviewParam 
   return url.toString();
 }
 
-export function routeScopeFromUrl(
-  input,
-  { router = 'history', reviewParam = 'review', ignoreQuery = [] } = {}
-) {
+export function routeScopeFromUrl(input, { router = 'history', reviewParam = 'review', ignoreQuery = [] } = {}) {
   const url = new URL(input, globalThis.location?.origin || 'https://example.invalid');
   const route = router === 'hash' ? hashRoute(url) : url;
   const excluded = new Set([reviewParam, ...ignoreQuery]);
   return `${route.pathname || '/'}${sortedSearch(route.searchParams, excluded)}`;
+}
+
+export function normalizeReviewScope(scope, config = {}) {
+  const { route, contextId } = splitScope(String(scope || '/'));
+  const normalizedRoute = routeScopeFromUrl(route, { ...config, router: 'history' });
+  return contextId ? `${normalizedRoute}${CONTEXT_SEPARATOR}${encodeURIComponent(contextId)}` : normalizedRoute;
 }
 
 function splitScope(scope) {
@@ -186,7 +208,11 @@ function isVisible(element) {
 
 function elementLabel(element) {
   if (!element) return 'Page';
-  const explicit = [element.getAttribute('aria-label'), element.getAttribute('title'), element.getAttribute('placeholder')]
+  const explicit = [
+    element.getAttribute('aria-label'),
+    element.getAttribute('title'),
+    element.getAttribute('placeholder'),
+  ]
     .find(value => value?.trim())
     ?.trim();
   if (explicit) return explicit.slice(0, 120);
@@ -435,8 +461,7 @@ class ReviewPrototypeWidget {
     this.onKeydown = event => this.keydown(event);
     this.observer = new MutationObserver(mutations => {
       const onlyWidgetChanges = mutations.every(
-        mutation =>
-          mutation.target instanceof Element && Boolean(mutation.target.closest('[data-review-prototype-ui]'))
+        mutation => mutation.target instanceof Element && Boolean(mutation.target.closest('[data-review-prototype-ui]'))
       );
       if (!onlyWidgetChanges) this.scheduleSurfaceSync();
     });
@@ -503,7 +528,8 @@ class ReviewPrototypeWidget {
   syncSurface() {
     const context = this.activeContext();
     const element = context?.element instanceof HTMLElement ? context.element : context;
-    const contextId = context?.id || element?.dataset.reviewContext || element?.getAttribute('aria-label') || element?.id || null;
+    const contextId =
+      context?.id || element?.dataset.reviewContext || element?.getAttribute('aria-label') || element?.id || null;
     const bounds = element?.getBoundingClientRect() || {
       left: 0,
       top: 0,
@@ -540,6 +566,11 @@ class ReviewPrototypeWidget {
     if (typeof this.config.getScope === 'function') return String(this.config.getScope());
     const route = routeScopeFromUrl(window.location.href, this.config);
     return this.surface.contextId ? `${route}${CONTEXT_SEPARATOR}${encodeURIComponent(this.surface.contextId)}` : route;
+  }
+
+  scopeMatches(scope, currentScope = this.currentScope()) {
+    if (typeof this.config.getScope === 'function') return scope === currentScope;
+    return normalizeReviewScope(scope, this.config) === normalizeReviewScope(currentScope, this.config);
   }
 
   localPoint(event) {
@@ -771,6 +802,10 @@ class ReviewPrototypeWidget {
     session.cancelled = true;
     if (session.restartTimer) window.clearTimeout(session.restartTimer);
     if (session.finishTimer) window.clearTimeout(session.finishTimer);
+    session.recognition.onstart = null;
+    session.recognition.onresult = null;
+    session.recognition.onerror = null;
+    session.recognition.onend = null;
     try {
       session.recognition.abort();
     } catch {
@@ -781,6 +816,17 @@ class ReviewPrototypeWidget {
       session.textarea.setSelectionRange(session.selectionStart, session.selectionEnd);
     }
     session.finish();
+  }
+
+  yieldDictationToTyping(event) {
+    const session = this.dictation;
+    if (!session || !isTextEditIntent(event)) return;
+    const selectionStart = session.textarea.selectionStart;
+    const selectionEnd = session.textarea.selectionEnd;
+    this.cancelDictation({ restore: false });
+    if (session.textarea.isConnected) {
+      session.textarea.setSelectionRange(selectionStart, selectionEnd);
+    }
   }
 
   startDictation({ textarea, name, focusNameOnFinish, send, field, mic, wave, cancel, stop, status, syncActions }) {
@@ -830,7 +876,10 @@ class ReviewPrototypeWidget {
       setState(session.error ? 'error' : 'idle', completionMessage);
       textarea.readOnly = false;
       send.disabled = false;
-      const insertedLength = Math.max(0, textarea.value.length - (originalValue.length - (selectionEnd - selectionStart)));
+      const insertedLength = Math.max(
+        0,
+        textarea.value.length - (originalValue.length - (selectionEnd - selectionStart))
+      );
       const caret = Math.min(textarea.value.length, selectionStart + insertedLength);
       textarea.setSelectionRange(caret, caret);
       if (!session.error && session.transcript && focusNameOnFinish && name?.isConnected) name.focus();
@@ -847,11 +896,7 @@ class ReviewPrototypeWidget {
     });
     const Phrase = window.SpeechRecognitionPhrase;
     if (Phrase && 'phrases' in recognition) {
-      const routePhrase = window.location.pathname
-        .split('/')
-        .filter(Boolean)
-        .at(-1)
-        ?.replaceAll('-', ' ');
+      const routePhrase = window.location.pathname.split('/').filter(Boolean).at(-1)?.replaceAll('-', ' ');
       const phrases = speechContextPhrases([
         ...(Array.isArray(this.config.voicePhrases) ? this.config.voicePhrases : []),
         this.draft?.elementLabel,
@@ -973,7 +1018,7 @@ class ReviewPrototypeWidget {
       this.serviceError = '';
       const pendingId = sessionStorage.getItem(this.pendingKey());
       const pending = this.comments.find(comment => comment.id === pendingId);
-      if (pending && pending.scope === this.currentScope()) {
+      if (pending && this.scopeMatches(pending.scope)) {
         this.selectedComment = pending;
         sessionStorage.removeItem(this.pendingKey());
         queueMicrotask(() => this.scrollCommentIntoView(pending));
@@ -991,18 +1036,13 @@ class ReviewPrototypeWidget {
   }
 
   commentEndpoint(commentId) {
-    return sharedCommentStatusEndpoint(
-      this.config.apiUrl,
-      this.config.projectId,
-      this.session.id,
-      commentId
-    );
+    return sharedCommentStatusEndpoint(this.config.apiUrl, this.config.projectId, this.session.id, commentId);
   }
 
   async updateSharedCommentStatus(commentId, status) {
     const response = await fetch(this.commentEndpoint(commentId), {
       method: 'PATCH',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
     if (!response.ok) {
@@ -1013,9 +1053,7 @@ class ReviewPrototypeWidget {
   }
 
   async syncLegacyDoneComments() {
-    const pending = this.comments.filter(
-      comment => this.legacyResolved.has(comment.id) && !commentIsDone(comment)
-    );
+    const pending = this.comments.filter(comment => this.legacyResolved.has(comment.id) && !commentIsDone(comment));
     if (!pending.length) {
       if (this.legacyResolved.size) localStorage.removeItem(this.resolvedKey());
       this.legacyResolved.clear();
@@ -1028,7 +1066,7 @@ class ReviewPrototypeWidget {
     results.forEach((result, index) => {
       const commentId = pending[index].id;
       if (result.status === 'fulfilled') {
-        this.comments = this.comments.map(comment => comment.id === commentId ? result.value : comment);
+        this.comments = this.comments.map(comment => (comment.id === commentId ? result.value : comment));
         this.resolved.add(commentId);
         this.legacyResolved.delete(commentId);
       } else {
@@ -1082,7 +1120,7 @@ class ReviewPrototypeWidget {
       } else {
         const response = await fetch(this.commentsEndpoint(), {
           method: 'POST',
-          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
           body: JSON.stringify(draft),
         });
         if (!response.ok) {
@@ -1109,7 +1147,7 @@ class ReviewPrototypeWidget {
         localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.resolved]));
       } else {
         const updated = await this.updateSharedCommentStatus(comment.id, nextStatus);
-        this.comments = this.comments.map(item => item.id === comment.id ? updated : item);
+        this.comments = this.comments.map(item => (item.id === comment.id ? updated : item));
         if (commentIsDone(updated)) this.resolved.add(comment.id);
         else this.resolved.delete(comment.id);
       }
@@ -1147,7 +1185,7 @@ class ReviewPrototypeWidget {
   }
 
   async openInboxComment(comment) {
-    if (comment.scope === this.currentScope()) {
+    if (this.scopeMatches(comment.scope)) {
       this.panelOpen = false;
       this.selectedComment = comment;
       this.render();
@@ -1155,12 +1193,20 @@ class ReviewPrototypeWidget {
       return;
     }
     sessionStorage.setItem(this.pendingKey(), comment.id);
-    const { route, contextId } = splitScope(comment.scope);
+    const normalizedScope =
+      typeof this.config.getScope === 'function' ? comment.scope : normalizeReviewScope(comment.scope, this.config);
+    const { route, contextId } = splitScope(normalizedScope);
     const target = this.urlForRoute(route);
     if (typeof this.config.navigate === 'function') {
-      await this.config.navigate({ scope: comment.scope, route, contextId, reviewUrl: target, comment });
+      await this.config.navigate({ scope: normalizedScope, route, contextId, reviewUrl: target, comment });
       this.panelOpen = false;
-      this.scheduleSurfaceSync();
+      this.syncSurface();
+      if (this.scopeMatches(comment.scope)) {
+        this.selectedComment = comment;
+        sessionStorage.removeItem(this.pendingKey());
+        this.render();
+        window.requestAnimationFrame(() => this.scrollCommentIntoView(comment));
+      }
       return;
     }
     window.location.assign(target);
@@ -1195,7 +1241,7 @@ class ReviewPrototypeWidget {
     this.annotations.replaceChildren();
     const scope = this.currentScope();
     for (const comment of this.comments) {
-      if (comment.scope !== scope || this.resolved.has(comment.id)) continue;
+      if (!this.scopeMatches(comment.scope, scope) || this.resolved.has(comment.id)) continue;
       const geometry = this.commentGeometry(comment);
       if (geometry.selection) {
         const selection = this.drawRect(geometry.selection, 'rp-selection');
@@ -1381,6 +1427,7 @@ class ReviewPrototypeWidget {
       void this.createComment({ authorName: name.value, message: textarea.value });
     });
     textarea.addEventListener('keydown', event => {
+      this.yieldDictationToTyping(event);
       if (event.key === 'Escape') {
         event.preventDefault();
         dismiss.click();
@@ -1391,6 +1438,9 @@ class ReviewPrototypeWidget {
         form.requestSubmit();
       }
     });
+    for (const eventName of ['beforeinput', 'paste', 'cut', 'drop', 'compositionstart']) {
+      textarea.addEventListener(eventName, event => this.yieldDictationToTyping(event));
+    }
     textarea.addEventListener('input', syncComposerActions);
     actions.append(send);
     form.append(header, commentField, voiceControls);
@@ -1420,7 +1470,7 @@ class ReviewPrototypeWidget {
     this.cardAnchor?.remove();
     this.cardAnchor = null;
     const comment = this.selectedComment;
-    if (!comment || comment.scope !== this.currentScope()) return;
+    if (!comment || !this.scopeMatches(comment.scope)) return;
     const card = document.createElement('article');
     card.className = 'rp-card';
     const header = document.createElement('header');
@@ -1428,7 +1478,11 @@ class ReviewPrototypeWidget {
     author.textContent = comment.authorName;
     const controls = document.createElement('span');
     controls.className = 'rp-card-controls';
-    const done = button('rp-plain-icon', this.resolved.has(comment.id) ? 'Reopen comment' : 'Mark comment as done', ICONS.check);
+    const done = button(
+      'rp-plain-icon',
+      this.resolved.has(comment.id) ? 'Reopen comment' : 'Mark comment as done',
+      ICONS.check
+    );
     done.classList.toggle('rp-done-control', this.resolved.has(comment.id));
     done.addEventListener('click', event => {
       isolateReviewUiEvent(event, { preventDefault: true });
