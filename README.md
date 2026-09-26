@@ -14,6 +14,8 @@ Inbox comments on the current screen open in place. Hosts can ignore deployment-
 saved comments and provide SPA navigation for comments that belong to another product state, avoiding a full reload.
 An open comment card remains mounted while the host page reacts to hover or other layout changes, so repositioning does
 not replay the entrance animation or flicker.
+Each inbox row includes a trash action immediately before its status. Deletion requires confirmation and permanently
+removes the comment from shared storage.
 
 In supported Google Chrome, selecting a comment target immediately attempts dictation inside the compact dark composer. If the reviewer starts editing the feedback field, typing takes control immediately: voice capture stops, visible transcript is preserved, and the first edit still lands.
 The transcript stays editable and is never submitted automatically. Safari, Edge, and unsupported browsers use the

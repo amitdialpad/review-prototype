@@ -53,6 +53,8 @@ commands.
   host's SPA navigation for a different saved state instead of reloading the page.
 - Keep an open comment card mounted while the host page reacts to hover or other DOM changes; surface synchronization
   should reposition the existing card rather than replay its entrance animation.
+- Put a compact trash action immediately before each inbox status. Require confirmation before permanently deleting a
+  comment from shared storage.
 - Reviewer markers are colored rounded-square initials. Done status is shared, Done comments remain in inbox history,
   and Done comments are excluded from the work queue by default. Reopened comments restore their marker and return to
   the work queue.

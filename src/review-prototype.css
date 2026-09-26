@@ -240,17 +240,12 @@
 }
 
 .rp-comment-row {
-  display: flex;
+  position: relative;
   width: 100%;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 10px 8px;
   border: 0;
   border-radius: 9px;
   background: transparent;
   color: var(--rp-text);
-  cursor: pointer;
-  text-align: left;
 }
 
 .rp-comment-row:hover {
@@ -259,6 +254,20 @@
 
 .rp-comment-row-done {
   background: color-mix(in srgb, var(--rp-done) 8%, var(--rp-surface));
+}
+
+.rp-comment-open {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .rp-avatar {
@@ -282,12 +291,21 @@
 
 .rp-comment-meta {
   display: flex;
-  gap: 12px;
   align-items: baseline;
-  justify-content: space-between;
+  padding-right: 96px;
 }
 
-.rp-comment-meta > span {
+.rp-comment-actions {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.rp-comment-actions > span {
+  max-width: 88px;
   overflow: hidden;
   color: var(--rp-muted);
   font-size: 12px;
@@ -295,9 +313,33 @@
   white-space: nowrap;
 }
 
-.rp-comment-meta .rp-done-label {
+.rp-comment-actions .rp-done-label {
   color: var(--rp-done);
   font-weight: 650;
+}
+
+.rp-delete-comment {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rp-muted);
+  cursor: pointer;
+}
+
+.rp-delete-comment:hover,
+.rp-delete-comment:focus-visible {
+  background: color-mix(in srgb, var(--rp-danger) 16%, transparent);
+  color: var(--rp-danger);
+}
+
+.rp-delete-comment svg {
+  width: 16px;
+  height: 16px;
 }
 
 .rp-comment-message {

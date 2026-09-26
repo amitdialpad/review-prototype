@@ -143,6 +143,16 @@ async function updateCommentStatus(store, projectId, sessionId, commentId, statu
   throw new Error('Comment changed while its status was being updated. Please try again.');
 }
 
+async function deleteComment(store, projectId, sessionId, commentId, now = Date.now()) {
+  const result = await store.list({ prefix: commentPrefix(projectId, sessionId) });
+  const blob = result.blobs.find(
+    item => expirationFromCommentKey(item.key) > now && item.key.endsWith(`-${commentId}`)
+  );
+  if (!blob) return false;
+  await store.delete(blob.key);
+  return true;
+}
+
 async function useWriteSlot(store, projectId, sessionId, now = Date.now()) {
   const minute = Math.floor(now / 60_000);
   const key = `limits/${projectId}/${sessionId}/${minute}`;
@@ -222,7 +232,7 @@ export async function handleReviewRequest(request, env, store) {
     if (origin) {
       response.headers.set('Access-Control-Allow-Origin', origin);
       response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
       response.headers.set('Access-Control-Max-Age', '86400');
       response.headers.set('Vary', 'Origin');
     }
@@ -269,6 +279,16 @@ export async function handleReviewRequest(request, env, store) {
     const comment = await updateCommentStatus(store, projectId, sessionId, commentId, body.status);
     if (!comment) return json({ error: 'Comment was not found' }, 404, origin);
     return json(comment, 200, origin);
+  }
+
+  if (request.method === 'DELETE' && commentId) {
+    if (!(await useWriteSlot(store, projectId, sessionId))) {
+      return json({ error: 'Please wait before deleting another comment' }, 429, origin);
+    }
+    if (!(await deleteComment(store, projectId, sessionId, commentId))) {
+      return json({ error: 'Comment was not found' }, 404, origin);
+    }
+    return json({ deleted: true, id: commentId }, 200, origin);
   }
 
   return json({ error: 'Method not allowed' }, 405, origin);

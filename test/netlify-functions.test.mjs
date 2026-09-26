@@ -221,6 +221,55 @@ test('marks a shared comment Done without deleting it from inbox history', async
   assert.equal((await relisted.json()).comments[0].status, 'open');
 });
 
+test('permanently deletes a shared comment after an explicit delete request', async () => {
+  const store = new MemoryStore();
+  const created = await handleReviewRequest(
+    new Request(endpoint, {
+      method: 'POST',
+      headers: { Origin: 'https://prototype.example', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: '/billing',
+        authorName: 'Sarah',
+        message: 'Remove this test feedback',
+        x: 0.2,
+        y: 0.4,
+        selection: null,
+        elementLabel: 'Plan card',
+      }),
+    }),
+    env,
+    store
+  );
+  const comment = await created.json();
+  const deleted = await handleReviewRequest(
+    new Request(`${endpoint}/${comment.id}`, {
+      method: 'DELETE',
+      headers: { Origin: 'https://prototype.example' },
+    }),
+    env,
+    store
+  );
+  assert.equal(deleted.status, 200);
+  assert.deepEqual(await deleted.json(), { deleted: true, id: comment.id });
+
+  const listed = await handleReviewRequest(
+    new Request(endpoint, { headers: { Origin: 'https://prototype.example' } }),
+    env,
+    store
+  );
+  assert.deepEqual((await listed.json()).comments, []);
+
+  const missing = await handleReviewRequest(
+    new Request(`${endpoint}/${comment.id}`, {
+      method: 'DELETE',
+      headers: { Origin: 'https://prototype.example' },
+    }),
+    env,
+    store
+  );
+  assert.equal(missing.status, 404);
+});
+
 test('rejects unsupported comment status changes and unknown comments', async () => {
   const store = new MemoryStore();
   const invalid = await handleReviewRequest(
@@ -246,13 +295,13 @@ test('rejects unsupported comment status changes and unknown comments', async ()
   assert.equal(missing.status, 404);
 });
 
-test('advertises PATCH for shared Done state', async () => {
+test('advertises PATCH and DELETE for shared comment management', async () => {
   const response = await handleReviewRequest(
     new Request(endpoint, { method: 'OPTIONS', headers: { Origin: 'https://prototype.example' } }),
     env,
     new MemoryStore()
   );
-  assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, POST, PATCH, OPTIONS');
+  assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, POST, PATCH, DELETE, OPTIONS');
 });
 
 test('accepts Netlify rewritten comment IDs from the query string', async () => {

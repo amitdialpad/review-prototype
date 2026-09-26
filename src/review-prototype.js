@@ -10,6 +10,7 @@ const ICONS = {
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 14.5 14.5 9M7 16.5H5.5a4 4 0 0 1 0-8H9m6 0h3.5a4 4 0 0 1 0 8H15"/></svg>',
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>',
   mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
 };
 
@@ -1052,6 +1053,31 @@ class ReviewPrototypeWidget {
     return response.json();
   }
 
+  async deleteComment(comment) {
+    try {
+      if (this.session.mode === 'local') {
+        this.comments = this.comments.filter(item => item.id !== comment.id);
+        this.resolved.delete(comment.id);
+        localStorage.setItem(this.commentsKey(), JSON.stringify(this.comments));
+        localStorage.setItem(this.resolvedKey(), JSON.stringify([...this.resolved]));
+      } else {
+        const response = await fetch(this.commentEndpoint(comment.id), { method: 'DELETE' });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          throw new Error(payload?.error || `Review service returned ${response.status}`);
+        }
+        this.comments = this.comments.filter(item => item.id !== comment.id);
+        this.resolved.delete(comment.id);
+        this.legacyResolved.delete(comment.id);
+      }
+      if (this.selectedComment?.id === comment.id) this.selectedComment = null;
+      this.serviceError = '';
+    } catch (error) {
+      this.serviceError = error instanceof Error ? error.message : 'Could not delete this comment.';
+    }
+    this.render();
+  }
+
   async syncLegacyDoneComments() {
     const pending = this.comments.filter(comment => this.legacyResolved.has(comment.id) && !commentIsDone(comment));
     if (!pending.length) {
@@ -1293,11 +1319,13 @@ class ReviewPrototypeWidget {
     const list = document.createElement('div');
     list.className = 'rp-comment-list';
     for (const comment of this.comments) {
-      const row = document.createElement('button');
-      row.type = 'button';
+      const row = document.createElement('div');
       row.className = 'rp-comment-row';
       const done = this.resolved.has(comment.id);
       row.classList.toggle('rp-comment-row-done', done);
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'rp-comment-open';
       const identity = authorPresentation(comment.authorName);
       const avatar = document.createElement('span');
       avatar.className = 'rp-avatar';
@@ -1309,16 +1337,26 @@ class ReviewPrototypeWidget {
       meta.className = 'rp-comment-meta';
       const name = document.createElement('strong');
       name.textContent = comment.authorName;
+      meta.append(name);
+      const actions = document.createElement('span');
+      actions.className = 'rp-comment-actions';
+      const remove = button('rp-delete-comment', 'Delete comment', ICONS.trash);
+      remove.addEventListener('click', event => {
+        isolateReviewUiEvent(event, { preventDefault: true });
+        if (!window.confirm('Delete this comment permanently?')) return;
+        void this.deleteComment(comment);
+      });
       const status = document.createElement('span');
       status.textContent = done ? '✓ Done' : comment.elementLabel || 'Page';
       status.className = done ? 'rp-done-label' : '';
-      meta.append(name, status);
+      actions.append(remove, status);
       const message = document.createElement('span');
       message.className = 'rp-comment-message';
       message.textContent = comment.message;
       content.append(meta, message);
-      row.append(avatar, content);
-      row.addEventListener('click', () => void this.openInboxComment(comment));
+      open.append(avatar, content);
+      open.addEventListener('click', () => void this.openInboxComment(comment));
+      row.append(open, actions);
       list.append(row);
     }
     this.panel.append(list);
