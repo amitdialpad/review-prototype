@@ -55,6 +55,8 @@ commands.
   should reposition the existing card rather than replay its entrance animation.
 - Put a compact trash action immediately before each inbox status. Require confirmation before permanently deleting a
   comment from shared storage.
+- Order inbox comments newest first and show a compact local timestamp beside the reviewer name. Represent Done with a
+  quiet green check rather than repeating the word on every row; retain the full Done label for assistive technology.
 - Reviewer markers are colored rounded-square initials. Done status is shared, Done comments remain in inbox history,
   and Done comments are excluded from the work queue by default. Reopened comments restore their marker and return to
   the work queue.

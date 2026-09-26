@@ -122,6 +122,26 @@ export function commentIsDone(comment) {
   return Boolean(comment?.resolvedAt);
 }
 
+export function newestCommentsFirst(comments = []) {
+  return [...comments].sort((left, right) => {
+    const leftTime = Date.parse(left?.createdAt || '') || 0;
+    const rightTime = Date.parse(right?.createdAt || '') || 0;
+    return rightTime - leftTime;
+  });
+}
+
+export function formatCommentTimestamp(value, { locale, timeZone } = {}) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    ...(timeZone ? { timeZone } : {}),
+  }).format(date);
+}
+
 export function isolateReviewUiEvent(event, { preventDefault = false } = {}) {
   if (preventDefault && event?.cancelable) event.preventDefault?.();
   event?.stopPropagation?.();
@@ -1266,7 +1286,7 @@ class ReviewPrototypeWidget {
   renderAnnotations() {
     this.annotations.replaceChildren();
     const scope = this.currentScope();
-    for (const comment of this.comments) {
+    for (const comment of newestCommentsFirst(this.comments)) {
       if (!this.scopeMatches(comment.scope, scope) || this.resolved.has(comment.id)) continue;
       const geometry = this.commentGeometry(comment);
       if (geometry.selection) {
@@ -1318,7 +1338,7 @@ class ReviewPrototypeWidget {
     }
     const list = document.createElement('div');
     list.className = 'rp-comment-list';
-    for (const comment of this.comments) {
+    for (const comment of newestCommentsFirst(this.comments)) {
       const row = document.createElement('div');
       row.className = 'rp-comment-row';
       const done = this.resolved.has(comment.id);
@@ -1337,7 +1357,14 @@ class ReviewPrototypeWidget {
       meta.className = 'rp-comment-meta';
       const name = document.createElement('strong');
       name.textContent = comment.authorName;
+      const timestampText = formatCommentTimestamp(comment.createdAt);
+      const timestamp = document.createElement('time');
+      timestamp.className = 'rp-comment-timestamp';
+      timestamp.dateTime = comment.createdAt || '';
+      timestamp.textContent = timestampText;
+      if (timestampText) timestamp.title = new Date(comment.createdAt).toLocaleString();
       meta.append(name);
+      if (timestampText) meta.append(timestamp);
       const actions = document.createElement('span');
       actions.className = 'rp-comment-actions';
       const remove = button('rp-delete-comment', 'Delete comment', ICONS.trash);
@@ -1346,10 +1373,16 @@ class ReviewPrototypeWidget {
         if (!window.confirm('Delete this comment permanently?')) return;
         void this.deleteComment(comment);
       });
-      const status = document.createElement('span');
-      status.textContent = done ? '✓ Done' : comment.elementLabel || 'Page';
-      status.className = done ? 'rp-done-label' : '';
-      actions.append(remove, status);
+      actions.append(remove);
+      if (done) {
+        const status = document.createElement('span');
+        status.className = 'rp-comment-status';
+        status.innerHTML = ICONS.check;
+        status.setAttribute('role', 'img');
+        status.setAttribute('aria-label', 'Done');
+        status.title = 'Done';
+        actions.append(status);
+      }
       const message = document.createElement('span');
       message.className = 'rp-comment-message';
       message.textContent = comment.message;

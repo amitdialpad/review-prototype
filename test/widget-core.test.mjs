@@ -5,10 +5,12 @@ import {
   authorPresentation,
   commentComposerState,
   commentIsDone,
+  formatCommentTimestamp,
   isGoogleChrome,
   isolateReviewUiEvent,
   isTextEditIntent,
   mergeDictationTranscript,
+  newestCommentsFirst,
   normalizeReviewScope,
   parseReviewSession,
   preferredSpeechLanguage,
@@ -70,6 +72,25 @@ test('treats hosted Done state as inbox history rather than active feedback', ()
   assert.equal(commentIsDone({ status: 'open' }), false);
   assert.equal(commentIsDone({ status: 'open', resolvedAt: '2026-09-26T00:00:00Z' }), false);
   assert.equal(commentIsDone({}), false);
+});
+
+test('shows newest comments first without mutating storage order', () => {
+  const comments = [
+    { id: 'older', createdAt: '2026-09-25T10:00:00Z' },
+    { id: 'newest', createdAt: '2026-09-26T10:00:00Z' },
+    { id: 'middle', createdAt: '2026-09-26T09:00:00Z' },
+  ];
+
+  assert.deepEqual(newestCommentsFirst(comments).map(comment => comment.id), ['newest', 'middle', 'older']);
+  assert.deepEqual(comments.map(comment => comment.id), ['older', 'newest', 'middle']);
+});
+
+test('formats a compact comment timestamp', () => {
+  assert.equal(
+    formatCommentTimestamp('2026-09-26T09:47:00Z', { locale: 'en-US', timeZone: 'UTC' }),
+    'Sep 26, 9:47 AM'
+  );
+  assert.equal(formatCommentTimestamp('not-a-date'), '');
 });
 
 test('keeps an anchored comment attached when its element scrolls', () => {
