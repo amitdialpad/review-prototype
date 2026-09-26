@@ -51,6 +51,8 @@ commands.
 - Click and drag create content-anchored comments; modal comments stay on the modal; markers follow scrolling.
 - Inbox comments open in place when their product state matches. Ignore deployment-only query parameters and use the
   host's SPA navigation for a different saved state instead of reloading the page.
+- Keep an open comment card mounted while the host page reacts to hover or other DOM changes; surface synchronization
+  should reposition the existing card rather than replay its entrance animation.
 - Reviewer markers are colored rounded-square initials. Done status is shared, Done comments remain in inbox history,
   and Done comments are excluded from the work queue by default. Reopened comments restore their marker and return to
   the work queue.

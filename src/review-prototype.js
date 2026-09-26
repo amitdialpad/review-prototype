@@ -1465,14 +1465,27 @@ class ReviewPrototypeWidget {
   }
 
   renderCard() {
-    this.card?.remove();
-    this.card = null;
-    this.cardAnchor?.remove();
-    this.cardAnchor = null;
     const comment = this.selectedComment;
-    if (!comment || !this.scopeMatches(comment.scope)) return;
+    if (!comment || !this.scopeMatches(comment.scope)) {
+      this.card?.remove();
+      this.card = null;
+      this.cardAnchor?.remove();
+      this.cardAnchor = null;
+      return;
+    }
+    const point = this.commentGeometry(comment);
+    const renderKey = `${comment.id}:${this.resolved.has(comment.id) ? 'done' : 'open'}`;
+    if (this.card?.dataset.renderKey === renderKey && this.cardAnchor) {
+      this.placeCommentCard(this.card, point.x, point.y);
+      this.cardAnchor.style.left = `${point.x}px`;
+      this.cardAnchor.style.top = `${point.y}px`;
+      return;
+    }
+    this.card?.remove();
+    this.cardAnchor?.remove();
     const card = document.createElement('article');
     card.className = 'rp-card';
+    card.dataset.renderKey = renderKey;
     const header = document.createElement('header');
     const author = document.createElement('strong');
     author.textContent = comment.authorName;
@@ -1503,7 +1516,6 @@ class ReviewPrototypeWidget {
     card.append(header, context, message);
     this.root.append(card);
     this.card = card;
-    const point = this.commentGeometry(comment);
     this.placeCommentCard(card, point.x, point.y);
     const anchor = document.createElement('span');
     anchor.className = 'rp-card-anchor';
