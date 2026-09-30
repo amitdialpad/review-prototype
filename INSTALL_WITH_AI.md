@@ -66,7 +66,7 @@ and ask them to complete only that boundary. Never invent a successful deploymen
 Run these commands in the target website repository, using its existing package manager when appropriate:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.3
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://example-review.netlify.app
@@ -187,20 +187,13 @@ If any of these checks fail, report the exact blocker and do not return the link
 
 ## Optional: install the Codex skill
 
-The public repository includes the complete publish-and-revise skill at `skills/review`.
+The stable public release includes the complete publish-and-revise skill at `skills/review`. Ask Codex:
 
-Copy that directory into the owner's Codex skills directory:
+> Install the Review skill from
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.3/skills/review`.
 
-```bash
-mkdir -p ~/.codex/skills
-cp -R skills/review ~/.codex/skills/review
-```
-
-Run that command from a clone/fork of Review Prototype. If Review Prototype was installed only as a website
-dependency, copy it from `node_modules/review-prototype/skills/review` instead.
-
-If `~/.codex/skills/review` already exists, inspect it before replacing or merging it. Start a fresh Codex
-session if the newly installed skill is not discovered immediately. Then, from the target website repository, ask:
+Codex installs it into `~/.codex/skills/review`. Start a fresh Codex conversation so the skill is discovered. Then,
+from the target website repository, ask:
 
 > `$review` Make this prototype reviewable.
 

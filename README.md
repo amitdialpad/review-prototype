@@ -75,7 +75,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.3
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -165,7 +165,13 @@ their own terms and privacy policies.
 
 ## Optional Codex skill
 
-Copy `skills/review` into `~/.codex/skills/review`. Then ask Codex:
+The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
+
+> Install the Review skill from
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.3/skills/review`.
+
+Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
+then ask:
 
 > `$review` Make this prototype reviewable.
 
@@ -177,6 +183,24 @@ workflow, privately records the active session, and returns the route-specific l
 Codex retrieves open, unhandled comments, revises the same draft PR, verifies its redeployed preview, and returns the same
 links. Comments remain visible until the prototype owner verifies them and marks them Done. The skill stops instead of
 claiming success when the hosted API or preview is not reachable.
+
+On later `$review` cycles, the skill checks the latest stable GitHub release. Widget updates are tested and synced into
+the prototype before redeployment. Skill-instruction updates are installed with a private local backup and take effect
+in a fresh Codex conversation; active review URLs and comments are not replaced.
+
+### Dialpad designer pilot
+
+Dialpad designers use the same installation sentence above. The Dialpad-owned comment service and exact preview-origin
+allowlist are configured once by the platform owner, not by each designer. After installation, the designer's normal
+workflow is only:
+
+1. Open the prototype repository in Codex.
+2. Say `$review Make this prototype reviewable.`
+3. Share the verified link that Codex returns.
+4. After commenting, say `$review I’m done commenting. Apply the clear comments.`
+
+If the company-owned service is not configured or reachable, the skill stops with that concrete blocker instead of
+asking the designer to invent infrastructure or falling back to a personal service.
 
 ## Contributing
 

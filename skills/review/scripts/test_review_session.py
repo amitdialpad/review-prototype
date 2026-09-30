@@ -45,6 +45,8 @@ class ReviewSessionTest(unittest.TestCase):
         self.repo = Path(self.temporary.name) / "repo"
         self.repo.mkdir()
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "config", "gc.auto", "0"], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "config", "maintenance.auto", "false"], check=True)
         (self.repo / "README.md").write_text("fixture\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(self.repo), "add", "README.md"], check=True)
         subprocess.run(

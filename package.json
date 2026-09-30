@@ -1,6 +1,6 @@
 {
   "name": "review-prototype",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Figma-like comments for browser prototypes, shared through one review URL.",
   "type": "module",
   "license": "MIT",
@@ -11,7 +11,9 @@
     "netlify",
     "netlify.toml",
     "scripts",
-    "skills"
+    "skills",
+    "!skills/**/__pycache__/**",
+    "!skills/**/*.pyc"
   ],
   "bin": {
     "review-prototype": "bin/review-prototype.mjs"
@@ -21,7 +23,8 @@
     "pretest": "npm run build",
     "prepare": "npm run build",
     "test": "node --test",
-    "check": "npm test"
+    "test:skill": "python3 -m unittest discover -s skills/review/scripts -p 'test_*.py'",
+    "check": "npm test && npm run test:skill"
   },
   "engines": {
     "node": ">=20"
