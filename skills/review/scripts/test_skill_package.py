@@ -45,6 +45,12 @@ class SkillPackageTest(unittest.TestCase):
         }
         self.assertTrue(required.issubset(present), sorted(required - present))
 
+    def test_dialpad_pilot_uses_shared_netlify_service(self):
+        hosting = (SKILL_DIR / "references" / "hosting.md").read_text(encoding="utf-8")
+        self.assertIn("https://review-prototype.netlify.app", hosting)
+        self.assertIn("https://beacon-test.dialpad.design", hosting)
+        self.assertNotIn("Dialpad-owned Review Prototype deployment", hosting)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -33,7 +33,8 @@ same review link and automatically receive the ordinary typing experience with n
   redeployment for the prototype owner.
 
 GitHub hosts the source, contribution workflow, and installable package. Netlify hosts the demo/widget and receives
-shared comments. Each installer deploys a separate Netlify site and owns their data.
+shared comments. General adopters deploy their own service. Dialpad designers use Amit's shared pilot service so they
+can test the workflow before anyone invests in official infrastructure.
 
 ## Install it for your own prototypes
 
@@ -75,7 +76,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype#v0.3.3
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.4
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -168,7 +169,7 @@ their own terms and privacy policies.
 The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.3/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.4/skills/review`.
 
 Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
 then ask:
@@ -190,17 +191,18 @@ in a fresh Codex conversation; active review URLs and comments are not replaced.
 
 ### Dialpad designer pilot
 
-Dialpad designers use the same installation sentence above. The Dialpad-owned comment service and exact preview-origin
-allowlist are configured once by the platform owner, not by each designer. After installation, the designer's normal
-workflow is only:
+Dialpad designers should follow [`DIALPAD_DESIGNERS.md`](DIALPAD_DESIGNERS.md). They use Amit's shared pilot service at
+`https://review-prototype.netlify.app`; they do not need a Netlify account, backend deployment, Firebase/GCP access, or
+infrastructure approval. After installation, the designer's normal workflow is only:
 
 1. Open the prototype repository in Codex.
 2. Say `$review Make this prototype reviewable.`
 3. Share the verified link that Codex returns.
 4. After commenting, say `$review I’m done commenting. Apply the clear comments.`
 
-If the company-owned service is not configured or reachable, the skill stops with that concrete blocker instead of
-asking the designer to invent infrastructure or falling back to a personal service.
+The pilot service accepts the canonical Beacon preview origin and retains comments for 90 days. If another prototype
+origin is needed, the skill reports that exact origin so the service owner can decide whether to allow it; it never
+widens CORS to `*`.
 
 ## Contributing
 

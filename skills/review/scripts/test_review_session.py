@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import importlib.util
 import io
 import json
@@ -40,7 +41,7 @@ class Response:
 class ReviewSessionTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temporary.cleanup)
+        self.addCleanup(self.cleanup_temporary)
         self.state = Path(self.temporary.name) / "state"
         self.repo = Path(self.temporary.name) / "repo"
         self.repo.mkdir()
@@ -94,6 +95,16 @@ class ReviewSessionTest(unittest.TestCase):
         self.environment = patch.dict(os.environ, {review_session.STATE_ENV: str(self.state)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
+
+    def cleanup_temporary(self):
+        for attempt in range(5):
+            try:
+                self.temporary.cleanup()
+                return
+            except OSError as error:
+                if error.errno != errno.ENOTEMPTY or attempt == 4:
+                    raise
+                time.sleep(0.05)
 
     def arguments(self):
         return argparse.Namespace(

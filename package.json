@@ -1,11 +1,15 @@
 {
   "name": "review-prototype",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Figma-like comments for browser prototypes, shared through one review URL.",
   "type": "module",
   "license": "MIT",
   "private": true,
   "files": [
+    "DIALPAD_DESIGNERS.md",
+    "INSTALL_WITH_AI.md",
+    "PRIVACY.md",
+    "SECURITY.md",
     "bin",
     "dist",
     "netlify",

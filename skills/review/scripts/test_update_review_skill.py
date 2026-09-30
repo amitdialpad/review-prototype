@@ -56,12 +56,12 @@ class UpdateReviewSkillTest(unittest.TestCase):
         self.skill.mkdir(parents=True)
         (self.skill / "VERSION").write_text("0.3.2\n", encoding="utf-8")
         (self.skill / "keep.txt").write_text("old skill\n", encoding="utf-8")
-        self.archive = release_archive("0.3.3")
+        self.archive = release_archive("0.3.4")
 
     def opener(self, request, **_):
         url = request.full_url
         if url == update_review_skill.RELEASE_API:
-            payload = {"tag_name": "v0.3.3", "zipball_url": "https://example.test/review.zip"}
+            payload = {"tag_name": "v0.3.4", "zipball_url": "https://example.test/review.zip"}
             return Response(json.dumps(payload).encode())
         if url == "https://example.test/review.zip":
             return Response(self.archive)
@@ -71,7 +71,7 @@ class UpdateReviewSkillTest(unittest.TestCase):
         status = update_review_skill.update_status(self.skill, self.opener)
         self.assertTrue(status["updateAvailable"])
         self.assertEqual(status["currentVersion"], "0.3.2")
-        self.assertEqual(status["latestVersion"], "0.3.3")
+        self.assertEqual(status["latestVersion"], "0.3.4")
 
     def test_falls_back_to_highest_stable_tag_when_no_release_exists(self):
         def opener(request, **_):
@@ -100,12 +100,12 @@ class UpdateReviewSkillTest(unittest.TestCase):
             backup_root=backup_root,
         )
         self.assertTrue(result["updated"])
-        self.assertEqual(update_review_skill.read_version(self.skill), "0.3.3")
+        self.assertEqual(update_review_skill.read_version(self.skill), "0.3.4")
         self.assertTrue((Path(result["backup"]) / "keep.txt").exists())
         self.assertFalse((self.skill / "keep.txt").exists())
 
     def test_does_not_replace_current_version(self):
-        (self.skill / "VERSION").write_text("0.3.3\n", encoding="utf-8")
+        (self.skill / "VERSION").write_text("0.3.4\n", encoding="utf-8")
         status = update_review_skill.update_status(self.skill, self.opener)
         result = update_review_skill.apply_update(self.skill, status, opener=self.opener)
         self.assertFalse(result["updated"])

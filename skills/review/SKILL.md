@@ -72,6 +72,9 @@ Reuse an existing integration only when it meets the contract. Otherwise upgrade
 
 Shared review requires reachable hosted storage. Read [references/hosting.md](references/hosting.md). Never return a stakeholder link backed only by localStorage or a local API.
 
+For Dialpad Beacon prototypes, use the shared designer-pilot service documented there. Do not ask each designer to
+create, deploy, or administer a separate comment backend.
+
 ### 5. Create one review session
 
 Create or update `review-prototype.json` on the owner's behalf. Read [references/manifest.md](references/manifest.md) before changing it.

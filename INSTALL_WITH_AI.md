@@ -8,6 +8,9 @@ Give this entire file to the coding agent working in the website repository, the
 This document is written as an execution specification for an LLM or coding agent. Do not claim completion after only
 copying files or producing example URLs. Complete and verify the workflow end to end.
 
+Dialpad designers using Beacon should follow [`DIALPAD_DESIGNERS.md`](DIALPAD_DESIGNERS.md) instead. Their shared pilot
+service is already deployed, so they skip Part 1 and use `https://review-prototype.netlify.app` as the `apiUrl`.
+
 ## Required outcome
 
 The website owner can send a special URL to a reviewer. The reviewer enters their name, clicks an element or drags
@@ -66,7 +69,7 @@ and ask them to complete only that boundary. Never invent a successful deploymen
 Run these commands in the target website repository, using its existing package manager when appropriate:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype#v0.3.3
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.4
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://example-review.netlify.app
@@ -190,7 +193,7 @@ If any of these checks fail, report the exact blocker and do not return the link
 The stable public release includes the complete publish-and-revise skill at `skills/review`. Ask Codex:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.3/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.4/skills/review`.
 
 Codex installs it into `~/.codex/skills/review`. Start a fresh Codex conversation so the skill is discovered. Then,
 from the target website repository, ask:
