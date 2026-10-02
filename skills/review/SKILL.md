@@ -61,7 +61,7 @@ Resolve material presentation problems within scope. State remaining factual cav
 ### 3. Establish the preview target
 
 - For Dialpad Beacon work, read [references/beacon-preview.md](references/beacon-preview.md) and use the existing PR-preview pipeline at `https://beacon-test.dialpad.design/pr-preview-<PR>/`. Do not invent a second frontend host.
-- For Dialpad Design Studio work, use its existing GitHub Pages PR preview at `https://dialpad.github.io/design-studio/pr-preview/pr-<PR>/`. Confirm the actual PR and route before publishing.
+- For Dialpad Design Studio work, read [references/design-studio-preview.md](references/design-studio-preview.md) and use its existing GitHub Pages PR preview at `https://dialpad.github.io/design-studio/pr-preview/pr-<PR>/`. Confirm the actual PR and route before publishing.
 - For another repository, use its existing PR preview, Pages, or private-beta workflow. Verify its real base path and access model.
 - For local-first work, prove the exact worktree and bound port, keep the server alive for the owner to test, and label the result `Local proof`. Do not imply another person can open a localhost URL.
 

@@ -19,7 +19,7 @@ test('syncs versioned assets once and then reports a no-op', async t => {
   assert.equal(JSON.parse(first.stdout).changed, true);
   const manifest = JSON.parse(await readFile(resolve(publicDirectory, 'review-prototype.manifest.json'), 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
-  assert.equal(manifest.packageVersion, '0.3.5');
+  assert.equal(manifest.packageVersion, '0.3.6');
   assert.match(manifest.assets['review-prototype.js'], /^sha256-[a-f0-9]{64}$/);
 
   const second = await execute(process.execPath, [cli, 'sync', '--public-dir', publicDirectory, '--format', 'json']);
@@ -33,4 +33,31 @@ test('syncs versioned assets once and then reports a no-op', async t => {
   await unlink(resolve(publicDirectory, 'review-prototype.js'));
   const repaired = await execute(process.execPath, [cli, 'sync', '--public-dir', publicDirectory, '--format', 'json']);
   assert.equal(JSON.parse(repaired.stdout).changed, true);
+});
+
+test('prints a Vite base-path-safe integration snippet', async t => {
+  const temporary = await mkdtemp(resolve(tmpdir(), 'review-prototype-vite-'));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const publicDirectory = resolve(temporary, 'public/review-prototype');
+
+  const result = await execute(process.execPath, [
+    cli,
+    'init',
+    '--public-dir',
+    publicDirectory,
+    '--api-url',
+    'https://review-prototype.netlify.app',
+    '--project-id',
+    'design-studio-agentic-context-transfer',
+    '--router',
+    'hash',
+    '--vite',
+  ]);
+
+  assert.match(result.stdout, /import\.meta\.env\.BASE_URL/);
+  assert.match(result.stdout, /@vite-ignore/);
+  assert.match(result.stdout, /https:\/\/review-prototype\.netlify\.app/);
+  assert.match(result.stdout, /projectId: "design-studio-agentic-context-transfer"/);
+  assert.match(result.stdout, /router: "hash"/);
+  assert.doesNotMatch(result.stdout, /from '\/review-prototype/);
 });

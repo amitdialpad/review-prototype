@@ -62,13 +62,33 @@ async function syncAssets({ printSnippet = false } = {}) {
   );
   if (!printSnippet) return;
   const apiUrl = option('--api-url', 'https://YOUR-SITE.netlify.app');
+  const projectId = option('--project-id', 'my-prototype');
+  const router = option('--router', 'history');
+  if (process.argv.includes('--vite')) {
+    console.log(`
+const reviewAssetBase = \`${'${import.meta.env.BASE_URL}'}review-prototype/\`;
+const reviewStylesheet = document.createElement('link');
+reviewStylesheet.rel = 'stylesheet';
+reviewStylesheet.href = \`${'${reviewAssetBase}'}review-prototype.css\`;
+document.head.append(reviewStylesheet);
+
+const { ReviewPrototype } = await import(
+  /* @vite-ignore */ \`${'${reviewAssetBase}'}review-prototype.js\`
+);
+ReviewPrototype.init({
+  projectId: ${JSON.stringify(projectId)},
+  apiUrl: ${JSON.stringify(apiUrl)},
+  router: ${JSON.stringify(router)},
+});`);
+    return;
+  }
   console.log(`\n<link rel="stylesheet" href="/review-prototype/review-prototype.css" />
 <script type="module">
   import { ReviewPrototype } from '/review-prototype/review-prototype.js';
   ReviewPrototype.init({
-    projectId: 'my-prototype',
-    apiUrl: '${apiUrl}',
-    router: 'history',
+    projectId: ${JSON.stringify(projectId)},
+    apiUrl: ${JSON.stringify(apiUrl)},
+    router: ${JSON.stringify(router)},
   });
 </script>`);
 }
@@ -94,7 +114,7 @@ try {
     console.log(`Review Prototype
 
 Commands:
-  review-prototype init --public-dir <directory> [--api-url <url>]
+  review-prototype init --public-dir <directory> [--api-url <url>] [--project-id <id>] [--router history|hash] [--vite]
   review-prototype sync --public-dir <directory> [--format json]
   review-prototype links --manifest <file> --base-url <url> [--session <token>] [--format json]`);
   }

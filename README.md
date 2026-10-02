@@ -76,7 +76,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype#v0.3.5
+npm install --save-dev https://github.com/amitdialpad/review-prototype/archive/refs/tags/v0.3.6.tar.gz
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -108,6 +108,9 @@ Include the copied assets in the website shell:
 
 Use `router: 'hash'` for URLs such as `https://example.com/#/billing`. The widget is invisible on ordinary URLs; it
 only starts when the configured URL parameter contains `local` or a valid shared token.
+
+For Vite applications deployed below a nested base path, run `init` with `--vite` and use the printed
+`import.meta.env.BASE_URL` runtime-import snippet instead of the root-relative HTML example above.
 
 This works on any website you own or can edit. It cannot be attached invisibly to an unrelated website: customer-safe
 one-click review requires the site to load the widget.
@@ -169,7 +172,7 @@ their own terms and privacy policies.
 The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.5/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.6/skills/review`.
 
 Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
 then ask:
