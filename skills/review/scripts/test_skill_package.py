@@ -12,7 +12,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 class SkillPackageTest(unittest.TestCase):
     def test_skill_version_matches_package_version(self):
-        package = json.loads((REPOSITORY_ROOT / "package.json").read_text(encoding="utf-8"))
+        package_path = REPOSITORY_ROOT / "package.json"
+        if not package_path.is_file():
+            self.skipTest("repository package.json is unavailable in a standalone skill install")
+        package = json.loads(package_path.read_text(encoding="utf-8"))
         version = (SKILL_DIR / "VERSION").read_text(encoding="utf-8").strip()
         self.assertEqual(version, package["version"])
 
@@ -30,6 +33,7 @@ class SkillPackageTest(unittest.TestCase):
             "VERSION",
             "agents/openai.yaml",
             "references/beacon-preview.md",
+            "references/design-studio-preview.md",
             "references/feedback-loop.md",
             "references/hosting.md",
             "references/manifest.md",
