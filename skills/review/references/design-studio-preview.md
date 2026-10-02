@@ -17,7 +17,7 @@ Use the stable prebuilt HTTPS release package so initialization works immediatel
 credentials:
 
 ```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.7/review-prototype-0.3.7.tgz
+npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.8/review-prototype-0.3.8.tgz
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://review-prototype.netlify.app \
@@ -30,6 +30,9 @@ The ordinary root-relative initializer snippet is not safe for Design Studio's n
 widget once from the persistent Vite entrypoint using the printed `--vite` snippet. It resolves both assets through
 `import.meta.env.BASE_URL` and keeps the dynamic public-asset import out of Rollup resolution. Replace
 `design-studio-<prototype-name>` with a stable, non-secret identifier.
+
+The initializer enables `voiceInput: 'chrome'` by default. Keep it enabled: voice-first Chrome behavior is part of the
+required reviewer experience, while unsupported browsers automatically fall back to typing.
 
 Do not hardcode `/design-studio/pr-preview/pr-<PR>/` in source. The same branch must continue to work locally and under
 future preview numbers.
@@ -48,3 +51,5 @@ future preview numbers.
 6. Generate all links from one manifest and one shared session token. Verify the token remains inside the hash route
    through internal navigation.
 7. Verify the ordinary preview remains free of Review UI and the complete review URLs render the intended states.
+8. In Google Chrome, confirm that opening a new comment immediately attempts dictation and typing takes over without
+   losing the visible transcript. A toolbar without this voice-first composer is not a complete Review integration.

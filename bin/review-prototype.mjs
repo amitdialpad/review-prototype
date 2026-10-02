@@ -64,6 +64,7 @@ async function syncAssets({ printSnippet = false } = {}) {
   const apiUrl = option('--api-url', 'https://YOUR-SITE.netlify.app');
   const projectId = option('--project-id', 'my-prototype');
   const router = option('--router', 'history');
+  const voiceInput = option('--voice-input', 'chrome');
   if (process.argv.includes('--vite')) {
     console.log(`
 const reviewAssetBase = \`${'${import.meta.env.BASE_URL}'}review-prototype/\`;
@@ -77,6 +78,7 @@ import(/* @vite-ignore */ \`${'${reviewAssetBase}'}review-prototype.js\`).then((
     projectId: ${JSON.stringify(projectId)},
     apiUrl: ${JSON.stringify(apiUrl)},
     router: ${JSON.stringify(router)},
+    voiceInput: ${JSON.stringify(voiceInput)},
   });
 });`);
     return;
@@ -88,6 +90,7 @@ import(/* @vite-ignore */ \`${'${reviewAssetBase}'}review-prototype.js\`).then((
     projectId: ${JSON.stringify(projectId)},
     apiUrl: ${JSON.stringify(apiUrl)},
     router: ${JSON.stringify(router)},
+    voiceInput: ${JSON.stringify(voiceInput)},
   });
 </script>`);
 }
@@ -113,7 +116,7 @@ try {
     console.log(`Review Prototype
 
 Commands:
-  review-prototype init --public-dir <directory> [--api-url <url>] [--project-id <id>] [--router history|hash] [--vite]
+  review-prototype init --public-dir <directory> [--api-url <url>] [--project-id <id>] [--router history|hash] [--voice-input chrome|false] [--vite]
   review-prototype sync --public-dir <directory> [--format json]
   review-prototype links --manifest <file> --base-url <url> [--session <token>] [--format json]`);
   }
