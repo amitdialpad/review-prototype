@@ -69,7 +69,7 @@ and ask them to complete only that boundary. Never invent a successful deploymen
 Run these commands in the target website repository, using its existing package manager when appropriate:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype#v0.3.4
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.5
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://example-review.netlify.app
@@ -193,7 +193,7 @@ If any of these checks fail, report the exact blocker and do not return the link
 The stable public release includes the complete publish-and-revise skill at `skills/review`. Ask Codex:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.4/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.5/skills/review`.
 
 Codex installs it into `~/.codex/skills/review`. Start a fresh Codex conversation so the skill is discovered. Then,
 from the target website repository, ask:

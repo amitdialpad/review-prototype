@@ -76,7 +76,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev github:amitdialpad/review-prototype#v0.3.4
+npm install --save-dev github:amitdialpad/review-prototype#v0.3.5
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -169,7 +169,7 @@ their own terms and privacy policies.
 The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.4/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.5/skills/review`.
 
 Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
 then ask:
@@ -200,9 +200,9 @@ infrastructure approval. After installation, the designer's normal workflow is o
 3. Share the verified link that Codex returns.
 4. After commenting, say `$review I’m done commenting. Apply the clear comments.`
 
-The pilot service accepts the canonical Beacon preview origin and retains comments for 90 days. If another prototype
-origin is needed, the skill reports that exact origin so the service owner can decide whether to allow it; it never
-widens CORS to `*`.
+The pilot service accepts the canonical Beacon preview origin and Dialpad's GitHub Pages origin used by Design Studio,
+and retains comments for 90 days. If another prototype origin is needed, the skill reports that exact origin so the
+service owner can decide whether to allow it; it never widens CORS to `*`.
 
 ## Contributing
 

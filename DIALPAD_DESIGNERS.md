@@ -1,6 +1,6 @@
 # Review for Dialpad designers
 
-Review lets you put comments directly on a Beacon prototype. The person reviewing needs only the link you send them;
+Review lets you put comments directly on a Beacon or Design Studio prototype. The person reviewing needs only the link you send them;
 they do not need Codex, GitHub, or Netlify.
 
 ## Install once
@@ -8,7 +8,7 @@ they do not need Codex, GitHub, or Netlify.
 Open Codex and send this exact message:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.4/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.5/skills/review`.
 
 When Codex finishes, start a fresh conversation so Review is available.
 

@@ -49,6 +49,7 @@ class SkillPackageTest(unittest.TestCase):
         hosting = (SKILL_DIR / "references" / "hosting.md").read_text(encoding="utf-8")
         self.assertIn("https://review-prototype.netlify.app", hosting)
         self.assertIn("https://beacon-test.dialpad.design", hosting)
+        self.assertIn("https://dialpad.github.io", hosting)
         self.assertNotIn("Dialpad-owned Review Prototype deployment", hosting)
 
 
