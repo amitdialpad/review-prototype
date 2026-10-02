@@ -8,7 +8,7 @@ they do not need Codex, GitHub, or Netlify.
 Open Codex and send this exact message:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.6/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.7/skills/review`.
 
 When Codex finishes, start a fresh conversation so Review is available.
 

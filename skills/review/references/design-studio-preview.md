@@ -13,10 +13,11 @@ review parameters belong after `#/`.
 
 ## Install the portable widget
 
-Use the stable HTTPS release archive so CI does not require GitHub SSH credentials:
+Use the stable prebuilt HTTPS release package so initialization works immediately and CI does not require GitHub SSH
+credentials:
 
 ```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/archive/refs/tags/v0.3.6.tar.gz
+npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.7/review-prototype-0.3.7.tgz
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://review-prototype.netlify.app \

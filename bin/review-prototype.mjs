@@ -72,13 +72,12 @@ reviewStylesheet.rel = 'stylesheet';
 reviewStylesheet.href = \`${'${reviewAssetBase}'}review-prototype.css\`;
 document.head.append(reviewStylesheet);
 
-const { ReviewPrototype } = await import(
-  /* @vite-ignore */ \`${'${reviewAssetBase}'}review-prototype.js\`
-);
-ReviewPrototype.init({
-  projectId: ${JSON.stringify(projectId)},
-  apiUrl: ${JSON.stringify(apiUrl)},
-  router: ${JSON.stringify(router)},
+import(/* @vite-ignore */ \`${'${reviewAssetBase}'}review-prototype.js\`).then(({ ReviewPrototype }) => {
+  ReviewPrototype.init({
+    projectId: ${JSON.stringify(projectId)},
+    apiUrl: ${JSON.stringify(apiUrl)},
+    router: ${JSON.stringify(router)},
+  });
 });`);
     return;
   }
