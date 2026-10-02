@@ -4,13 +4,19 @@ The visual layer may be static, but comments shared between people require a rea
 
 ## Dialpad designer pilot
 
-For Dialpad Beacon prototypes, use the shared pilot service:
+For Dialpad Beacon and Design Studio prototypes, use the shared pilot service:
 
 `https://review-prototype.netlify.app`
 
-The service is operated by the Review Prototype owner and already allows the canonical Beacon preview origin:
+The service is operated by the Review Prototype owner and allows these exact Dialpad prototype origins:
 
-`https://beacon-test.dialpad.design`
+- Beacon: `https://beacon-test.dialpad.design`
+- Design Studio GitHub Pages: `https://dialpad.github.io`
+
+CORS works at the origin level, so the Design Studio approval necessarily covers other Dialpad GitHub Pages repositories
+on `https://dialpad.github.io`; it cannot be limited to the `/design-studio/` path. Review sessions remain protected by
+their unguessable bearer token. Do not treat another Pages path as supported until its prototype and access model have
+been checked.
 
 This is an intentional lightweight pilot, not a Dialpad-owned production service. Do not ask each designer to fork the
 service, create a Netlify account, deploy a backend, or obtain GCP/Firebase access. The API URL is public configuration,
