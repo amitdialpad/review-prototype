@@ -19,7 +19,7 @@ test('syncs versioned assets once and then reports a no-op', async t => {
   assert.equal(JSON.parse(first.stdout).changed, true);
   const manifest = JSON.parse(await readFile(resolve(publicDirectory, 'review-prototype.manifest.json'), 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
-  assert.equal(manifest.packageVersion, '0.3.6');
+  assert.equal(manifest.packageVersion, '0.3.7');
   assert.match(manifest.assets['review-prototype.js'], /^sha256-[a-f0-9]{64}$/);
 
   const second = await execute(process.execPath, [cli, 'sync', '--public-dir', publicDirectory, '--format', 'json']);
@@ -56,6 +56,8 @@ test('prints a Vite base-path-safe integration snippet', async t => {
 
   assert.match(result.stdout, /import\.meta\.env\.BASE_URL/);
   assert.match(result.stdout, /@vite-ignore/);
+  assert.match(result.stdout, /\.then\(\(\{ ReviewPrototype \}\) =>/);
+  assert.doesNotMatch(result.stdout, /await import/);
   assert.match(result.stdout, /https:\/\/review-prototype\.netlify\.app/);
   assert.match(result.stdout, /projectId: "design-studio-agentic-context-transfer"/);
   assert.match(result.stdout, /router: "hash"/);
