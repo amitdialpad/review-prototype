@@ -76,7 +76,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.7/review-prototype-0.3.7.tgz
+npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.8/review-prototype-0.3.8.tgz
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -172,7 +172,7 @@ their own terms and privacy policies.
 The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.7/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.8/skills/review`.
 
 Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
 then ask:
