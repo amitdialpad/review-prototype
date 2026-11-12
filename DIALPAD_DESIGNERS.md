@@ -7,7 +7,7 @@ Review routes Beacon prototypes through the portable commenting service and curr
 Open Codex and send this exact message:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.8/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.9/skills/review`.
 
 When Codex finishes, start a fresh conversation so Review is available.
 
