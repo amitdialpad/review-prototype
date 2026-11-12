@@ -111,6 +111,24 @@ class UpdateReviewSkillTest(unittest.TestCase):
         self.assertFalse(result["updated"])
         self.assertTrue((self.skill / "keep.txt").exists())
 
+    def test_keeps_studio_native_routing_when_release_is_stale(self):
+        reference = self.skill / "references" / "design-studio-preview.md"
+        reference.parent.mkdir(parents=True)
+        reference.write_text(
+            "https://studio.dialpad.design/pr-preview-<PR>/ with native Comments\n",
+            encoding="utf-8",
+        )
+        status = update_review_skill.update_status(self.skill, self.opener)
+        with self.assertRaisesRegex(update_review_skill.UpdateError, "remove current Studio native Comments"):
+            update_review_skill.apply_update(
+                self.skill,
+                status,
+                opener=self.opener,
+                backup_root=self.root / "backups",
+            )
+        self.assertEqual(update_review_skill.read_version(self.skill), "0.3.2")
+        self.assertEqual(reference.read_text(encoding="utf-8"), "https://studio.dialpad.design/pr-preview-<PR>/ with native Comments\n")
+
 
 if __name__ == "__main__":
     unittest.main()

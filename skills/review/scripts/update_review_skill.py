@@ -31,6 +31,7 @@ REQUIRED_PATHS = (
     "references/reviewer-experience.md",
     "scripts/review_session.py",
 )
+STUDIO_PREVIEW_ORIGIN = "https://studio.dialpad.design/pr-preview-"
 
 
 class UpdateError(ValueError):
@@ -179,6 +180,12 @@ def apply_update(
     backup = backup_root / f"review-{status['currentVersion']}-{int(time.time())}"
     try:
         extract_skill(download_archive(status["archiveUrl"], opener), staging, status["latestVersion"])
+        current_studio = skill_dir / "references" / "design-studio-preview.md"
+        if current_studio.is_file() and STUDIO_PREVIEW_ORIGIN in current_studio.read_text(encoding="utf-8"):
+            candidate_studio = staging / "references" / "design-studio-preview.md"
+            candidate_text = candidate_studio.read_text(encoding="utf-8") if candidate_studio.is_file() else ""
+            if STUDIO_PREVIEW_ORIGIN not in candidate_text or "native Comments" not in candidate_text:
+                raise UpdateError("Stable release would remove current Studio native Comments routing; keeping the installed skill")
         os.replace(skill_dir, previous)
         try:
             os.replace(staging, skill_dir)

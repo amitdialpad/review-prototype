@@ -76,7 +76,7 @@ shared-session URL; shared comments require the Netlify deployment below.
 Install directly from GitHub:
 
 ```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.8/review-prototype-0.3.8.tgz
+npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.9/review-prototype-0.3.9.tgz
 npx review-prototype init --public-dir public/review-prototype
 ```
 
@@ -172,7 +172,7 @@ their own terms and privacy policies.
 The supported installation path is a stable tagged skill, not a hand-copied folder. In Codex, say:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.8/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.9/skills/review`.
 
 Codex installs the skill into `~/.codex/skills/review`. Start a fresh conversation so the new skill is discovered,
 then ask:
@@ -194,18 +194,15 @@ in a fresh Codex conversation; active review URLs and comments are not replaced.
 
 ### Dialpad designer pilot
 
-Dialpad designers should follow [`DIALPAD_DESIGNERS.md`](DIALPAD_DESIGNERS.md). They use Amit's shared pilot service at
-`https://review-prototype.netlify.app`; they do not need a Netlify account, backend deployment, Firebase/GCP access, or
-infrastructure approval. After installation, the designer's normal workflow is only:
+Dialpad designers should follow [`DIALPAD_DESIGNERS.md`](DIALPAD_DESIGNERS.md). Beacon uses Amit's shared pilot service at
+`https://review-prototype.netlify.app`; current Design Studio in `dialpad/design` uses its own company-hosted Comments. Designers do not set up a separate comment backend for either host. After installation, the designer's normal workflow is only:
 
 1. Open the prototype repository in Codex.
 2. Say `$review Make this prototype reviewable.`
 3. Share the verified link that Codex returns.
 4. After commenting, say `$review I’m done commenting. Apply the clear comments.`
 
-The pilot service accepts the canonical Beacon preview origin and Dialpad's GitHub Pages origin used by Design Studio,
-and retains comments for 90 days. If another prototype origin is needed, the skill reports that exact origin so the
-service owner can decide whether to allow it; it never widens CORS to `*`.
+The pilot service accepts the canonical Beacon preview origin and retains portable comments for 90 days. A legacy GitHub Pages origin may also remain allowed, but current Studio PR previews are served from `studio.dialpad.design` and use native Comments. If another portable prototype origin is needed, the skill reports that exact origin so the service owner can decide whether to allow it; it never widens CORS to `*`.
 
 ## Contributing
 

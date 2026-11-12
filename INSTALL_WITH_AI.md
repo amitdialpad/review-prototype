@@ -69,7 +69,7 @@ and ask them to complete only that boundary. Never invent a successful deploymen
 Run these commands in the target website repository, using its existing package manager when appropriate:
 
 ```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.8/review-prototype-0.3.8.tgz
+npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.9/review-prototype-0.3.9.tgz
 npx review-prototype init \
   --public-dir public/review-prototype \
   --api-url https://example-review.netlify.app
@@ -94,9 +94,7 @@ Load the stylesheet and initialize the widget exactly once in the application's 
 </script>
 ```
 
-For Vite applications deployed below a nested base path, such as Design Studio PR previews, run `init` with `--vite`
-and use that printed runtime-import snippet instead. It resolves assets through `import.meta.env.BASE_URL`; do not copy
-the root-relative HTML snippet into Vite source.
+For Vite applications that need the portable widget and deploy below a nested base path, run `init` with `--vite` and use its printed runtime-import snippet. It resolves assets through `import.meta.env.BASE_URL`; do not copy the root-relative HTML snippet into Vite source. Current Design Studio in `dialpad/design` already supplies native Comments and must not install this widget.
 
 Integration requirements:
 
@@ -197,7 +195,7 @@ If any of these checks fail, report the exact blocker and do not return the link
 The stable public release includes the complete publish-and-revise skill at `skills/review`. Ask Codex:
 
 > Install the Review skill from
-> `https://github.com/amitdialpad/review-prototype/tree/v0.3.8/skills/review`.
+> `https://github.com/amitdialpad/review-prototype/tree/v0.3.9/skills/review`.
 
 Codex installs it into `~/.codex/skills/review`. Start a fresh Codex conversation so the skill is discovered. Then,
 from the target website repository, ask:
