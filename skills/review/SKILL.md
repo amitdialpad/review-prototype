@@ -15,7 +15,7 @@ Do not ask the prototype owner to assemble URLs, tokens, manifests, environment 
 
 At the beginning of a publish or feedback cycle, run `python3 <skill-dir>/scripts/update_review_skill.py --check --format json` when network access is available.
 
-- If a newer stable release exists, run the same script with `--apply`. It replaces only the local `review` skill, keeps a private backup, and does not touch the prototype or its review session.
+- If a newer stable release exists, run the same script with `--apply`. It replaces only the local `review` skill, keeps a private backup, and does not touch the prototype or its review session. The updater must retain current Studio native Comments routing; if a release would remove it, keep the installed skill and report the mismatch.
 - After an applied skill update, stop and ask the owner to start a fresh Codex conversation and repeat the `$review` request so the new instructions are loaded.
 - If the check is unavailable, continue with the installed stable version and report that the update check was skipped. Never install an arbitrary commit or update during an active deployment.
 
