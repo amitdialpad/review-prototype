@@ -1,55 +1,29 @@
-# Design Studio PR-preview publishing
+# Design Studio PR-preview review
 
-Use this reference for work in `dialpad/design-studio`.
+Use this reference for Studio prototypes in `dialpad/design` under `apps/studio/prototypes/<slug>/`. Check the repository's current workflow and `apps/studio/README.md` before acting; those files own the deploy and Comments behavior.
 
-## Target
+## Preview and access
 
-Publish through the repository's existing GitHub Pages workflow. The canonical base is:
+The current PR-preview pattern is:
 
-`https://dialpad.github.io/design-studio/pr-preview/pr-<PR>/`
+`https://studio.dialpad.design/pr-preview-<PR>/prototypes/<slug>/`
 
-Derive `<PR>` from the current branch's actual draft/open pull request. Design Studio uses hash routing, so route and
-review parameters belong after `#/`.
+The `Studio — PR Preview` build and `Studio — PR Preview Deploy` workflows produce the preview. Derive the PR and slug from the actual branch and prototype manifest; wait for the deploy run to succeed, then open the exact route. Studio is protected by company sign-in. A successful GitHub push, build, deploy status, or HTTP response alone does not prove that an authenticated reviewer can see the screen.
 
-## Install the portable widget
+Use the prototype's own route and query parameters for canonical states. Do not assume hash routing or prepend the old GitHub Pages path. Reuse the same PR and slug through review rounds so the native comment context remains stable.
 
-Use the stable prebuilt HTTPS release package so initialization works immediately and CI does not require GitHub SSH
-credentials:
+## Native Comments
 
-```bash
-npm install --save-dev https://github.com/amitdialpad/review-prototype/releases/download/v0.3.8/review-prototype-0.3.8.tgz
-npx review-prototype init \
-  --public-dir public/review-prototype \
-  --api-url https://review-prototype.netlify.app \
-  --project-id design-studio-<prototype-name> \
-  --router hash \
-  --vite
-```
+Studio injects its own Comments loader into hosted prototypes. Prototype authors do not install or initialize `review-prototype`, bundle its assets, add `review-prototype.json`, generate bearer links, or call `review_session.py`. They do not need to add a Comments integration to the prototype's source. The exact query value `callouts=false` disables native Comments; do not put it in reviewer links. `callouts=true` is accepted but unnecessary.
 
-The ordinary root-relative initializer snippet is not safe for Design Studio's nested PR-preview base. Initialize the
-widget once from the persistent Vite entrypoint using the printed `--vite` snippet. It resolves both assets through
-`import.meta.env.BASE_URL` and keeps the dynamic public-asset import out of Rollup resolution. Replace
-`design-studio-<prototype-name>` with a stable, non-secret identifier.
+Studio uses the company session that opened the preview and its company-hosted Callout API. The Add comment and Comments controls should appear after sign-in. A PR-preview conversation is keyed by canonical repository, PR number, Studio surface, and prototype slug. It persists across preview revisions, routes, query parameters, hashes, and redeployments. Different slugs and production Studio have separate contexts.
 
-The initializer enables `voiceInput: 'chrome'` by default. Keep it enabled: voice-first Chrome behavior is part of the
-required reviewer experience, while unsupported browsers automatically fall back to typing.
+## Verify and hand off
 
-Do not hardcode `/design-studio/pr-preview/pr-<PR>/` in source. The same branch must continue to work locally and under
-future preview numbers.
+1. Confirm the prototype's focused type check/build and the PR's Studio scope, package, preview-build, and deploy checks. Distinguish unrelated pending checks from relevant failures.
+2. Open the exact authenticated preview route. Confirm expected screen content, assets, query state, settings, and navigation.
+3. Confirm Add comment and Comments panel open without a second sign-in. If unavailable, inspect company sign-in, the injected loader, trusted preview metadata, and the Callout API. Do not substitute the portable Netlify service.
+4. When safe and appropriate, prove a disposable comment persists across refresh and a separate reviewer context. Avoid junk comments in the live PR context; say clearly when only the controls were verified.
+5. Share the exact prototype link and draft PR. State company sign-in is required. The URL itself is the review link; no token or extra review parameter is needed.
 
-## Required behavior
-
-1. Preserve the current draft PR and its existing GitHub Pages build/deploy workflow. Never merge unless the owner
-   explicitly changes the mode.
-2. Confirm `vite.config` derives the PR base and that the deployed HTML, widget JS, and widget CSS all resolve beneath
-   the exact preview base.
-3. Build with the repository's pinned package manager and runtime. A root page or HTTP 200 alone is insufficient.
-4. Use `https://review-prototype.netlify.app` for shared comments; `https://dialpad.github.io` is approved by the
-   designer-pilot service.
-5. Inspect the prototype metadata, named variant routes, and query-driven modes. Include each canonical state that is
-   part of the review decision, not merely the route root.
-6. Generate all links from one manifest and one shared session token. Verify the token remains inside the hash route
-   through internal navigation.
-7. Verify the ordinary preview remains free of Review UI and the complete review URLs render the intended states.
-8. In Google Chrome, confirm that opening a new comment immediately attempts dictation and typing takes over without
-   losing the visible transcript. A toolbar without this voice-first composer is not a complete Review integration.
+Studio's native Comments experience is distinct from the portable Review Prototype widget. Its voice-first and bearer-token checks do not apply. When applying feedback, use the native Comments panel or supported Callout API access and retain the same PR and slug.

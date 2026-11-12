@@ -1,6 +1,6 @@
 # Review manifest
 
-Use `review-prototype.json` at the relevant application root so repeated review rounds share stable route metadata. Create and maintain it for the prototype owner.
+For hosts using the portable Review Prototype widget, use `review-prototype.json` at the relevant application root so repeated review rounds share stable route metadata. Create and maintain it for the prototype owner. Current Studio in `dialpad/design` uses native Comments and does not need this manifest.
 
 ```json
 {

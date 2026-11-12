@@ -2,6 +2,12 @@
 
 Use this mode only after the user explicitly says the review round is finished or asks to apply/fix its comments.
 
+## Studio native Comments
+
+For Studio prototypes in `dialpad/design`, read feedback from the deployed prototype's native Comments panel or a supported Callout API connector. Studio does not use the portable Review Prototype token, private session receipt, or `review_session.py`. Keep the same PR and prototype slug across revisions. Exclude resolved or already implemented feedback unless the owner requests history. Do not automatically resolve comments after a code change; the owner checks the result and resolves accepted threads.
+
+The portable steps below apply only to hosts using the Review Prototype widget.
+
 ## Recover the session
 
 Run from the prototype worktree when possible:

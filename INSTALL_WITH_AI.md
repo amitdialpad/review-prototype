@@ -94,9 +94,7 @@ Load the stylesheet and initialize the widget exactly once in the application's 
 </script>
 ```
 
-For Vite applications deployed below a nested base path, such as Design Studio PR previews, run `init` with `--vite`
-and use that printed runtime-import snippet instead. It resolves assets through `import.meta.env.BASE_URL`; do not copy
-the root-relative HTML snippet into Vite source.
+For Vite applications that need the portable widget and deploy below a nested base path, run `init` with `--vite` and use its printed runtime-import snippet. It resolves assets through `import.meta.env.BASE_URL`; do not copy the root-relative HTML snippet into Vite source. Current Design Studio in `dialpad/design` already supplies native Comments and must not install this widget.
 
 Integration requirements:
 

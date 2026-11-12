@@ -1,6 +1,6 @@
 # Canonical commenting experience
 
-Read this before installing, upgrading, or verifying the contextual review layer.
+This is the acceptance contract for the portable Review Prototype widget. Read it before installing, upgrading, or verifying that widget. Current Studio in `dialpad/design` uses native Comments and has a separate contract in `design-studio-preview.md`.
 
 ## Interaction foundation
 
